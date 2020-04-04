@@ -24,7 +24,14 @@ git clone https://github.com/StageGuard/mirai-rhinojs-sdk
 ③将`source`文件夹与`rhino-1.7.12.jar`移动至平级目录。
 
 ④修改`demo.js`中`server`，`authKey`和`qqnum`变量。
-
+```javascript
+//HTTP API服务器地址
+const server = "http://localhost:8080/";
+//HTTP API服务器验证密钥
+const authKey = "stageguard";
+//要操作的机器人qq号
+const qqnum = "202746796";
+```
 ⑤运行脚本
 ```bash
 java -jar rhino-1.7.12.jar -f source/demo.js

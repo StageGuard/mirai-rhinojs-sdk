@@ -3,14 +3,6 @@
 //Scriptable & context
 const scope = this;
 const context = org.mozilla.javascript.Context.getCurrentContext();
-//array extension
-Array.prototype.contain = function(value){
-	if(this.indexOf(value) != -1) {
-		return true;
-	} else {
-		return false;
-	}
-}
 //logcat
 const Log = {
 	i: function(msg) {
