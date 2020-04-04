@@ -46,6 +46,6 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 ----
 
 ## To-Do
-- [*] 编写SDK文档
+- [x] 编写SDK文档
 - [ ] 支持监听EventMessage
 - [ ] 将MozillaRhino整合成mirai插件
