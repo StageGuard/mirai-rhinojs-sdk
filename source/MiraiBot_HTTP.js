@@ -10,7 +10,6 @@ function() {
 	}
 	r.module = "Mirai";
 	r.__version = "v1.0_alpha";
-	Log.i(r.__moduleInfo);
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -18,8 +17,11 @@ function() {
 		setSeverhost: function(s) {
 			if (s && typeof(s) == "string") this.server = s;
 		},
+		setQQNumber: function(q) {
+			if (q && typeof(q) == "string") this.server = q;
+		},
 		connect: function() {
-			if (this.server == null || this.auth == null) throw "Server host or authenticate key isnt set";
+			if (this.server == null || this.auth == null) throw "Server host or authenticate key isnt set.";
 			var p = NetworkUtils.post(this.server + "auth", JSON.stringify({
 				authKey: this.auth
 			}));
@@ -68,11 +70,18 @@ function() {
 			this.qqnum = attributeList.qqnum ? attributeList.qqnum: null;
 			this.server = attributeList.server ? attributeList.server: null;
 		},
-		getQQNumber: function(id) {
-			return this.qqnum;
+		getQQNumber: function() {
+			return Number(this.qqnum);
+		},
+		setQQNumber: function(num) {
+			this.qqnum = num;
+			if (this.verifyThreadStatus == 1) this.startVerifyThread();
+			if (this.listenThreadStatus == 1) this.startListen();
 		},
 		setMessageListener: function(listener) {
 			this.listener = listener;
+			if (this.verifyThreadStatus == 1) this.startVerifyThread();
+			if (this.listenThreadStatus == 1) this.startListen();
 		},
 		setVerifyThreadLoopInterval: function(ms) {
 			this.verifyThreadLoopInterval = ms;
@@ -84,6 +93,8 @@ function() {
 		},
 		setHookSize: function(size) {
 			this.hooksize = size;
+			if (this.verifyThreadStatus == 1) this.startVerifyThread();
+			if (this.listenThreadStatus == 1) this.startListen();
 		},
 		startVerifyThread: function() {
 			if (this.verifyLoopThread != null && this.verifyThreadStatus == 1) {
@@ -156,6 +167,8 @@ function() {
 			var interval = this.listenThreadLoopInterval;
 			var listener = this.listener;
 			var hooksize = this.hooksize;
+			
+			if(listener == null) throw "Cannot start to listen: No listener set.";
 
 			this.listenLoopThread = new java.lang.Thread(new java.lang.Runnable({
 				run: function() {
@@ -217,15 +230,14 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
+					return p.messageId;
 					Log.i("Message have sent(group=" + target + ")");
 				} else {
+					return 0;
 					Log.e(p);
 				}
 			} catch(e) {
-				this.sendGroupMessage(target, [{
-					type: "Plain",
-					text: "执行已完成，但消息发送失败:\n" + e.toString()
-				}], quoteId);
+				return 0;
 				Log.e("Target=" + target + ", MessageChain=" + _toSource(messageChain) + "\n" + e);
 			}
 		},
@@ -240,7 +252,28 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
+					return p.messageId;
 					Log.i("Message have sent(group=" + target + ")");
+				} else {
+					return 0;
+					Log.e(p);
+				}
+			} catch(e) {
+				return 0;
+				Log.e(e);
+			}
+		}
+		recall: function(target) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(target),
+				};
+				var p = NetworkUtils.post(server + "recall", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				if(p.length == 0) p = "{}";
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					Log.i("Message have recalled.(messageId=" + target + ")");
 				} else {
 					Log.e(p);
 				}
@@ -258,30 +291,7 @@ function() {
 			this.id = id;
 			this.name = name;
 			this.permission = permission;
-			this.group = new obj.GroupInfo(group);
-		}
-		obj.GroupInfo = function(group) {
-			this.id = group.id;
-			this.name = group.name;
-			this.botPermission = group.permission;
-		}
-		obj.GroupInfo.prototype = {
-			getId: function() {
-				return this.id;
-			},
-			getName: function() {
-				return this.name;
-			},
-			getBotPermission: function() {
-				return this.botPermission;
-			},
-			toString: function() {
-				return {
-					id: this.id,
-					name: this.name,
-					botPermission: this.botPermission
-				}
-			}
+			this.group = new r.GroupInfo(group);
 		}
 		obj.prototype = {
 			getId: function() {
@@ -303,6 +313,32 @@ function() {
 					permission: this.permission,
 					groupInfo: this.group.toString()
 				});
+			}
+		}
+		return obj;
+	}());
+	r.GroupInfo = (function(){
+		var obj = function(group) {
+			this.id = group.id;
+			this.name = group.name;
+			this.botPermission = group.permission;
+		}
+		obj.prototype = {
+			getId: function() {
+				return this.id;
+			},
+			getName: function() {
+				return this.name;
+			},
+			getBotPermission: function() {
+				return this.botPermission;
+			},
+			toString: function() {
+				return {
+					id: this.id,
+					name: this.name,
+					botPermission: this.botPermission
+				}
 			}
 		}
 		return obj;
@@ -382,15 +418,9 @@ function() {
 		}
 		
 	};
-	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}};
-	r.MessageTypeConst.PokeType = {
-		POKE: "Poke",
-		SHOWLOVE: "ShowLove",
-		LIKE: "Like",
-		HEARTBROKEN: "Heartbroken",
-		SIXSIXSIX: "SixSixSix",
-		FANGDAZHAO: "FangDaZhao"
-	};
+	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}, GroupPermission: {}};
+	r.MessageTypeConst.PokeType = {POKE: "Poke", SHOWLOVE: "ShowLove", LIKE: "Like", HEARTBROKEN: "Heartbroken", SIXSIXSIX: "SixSixSix", FANGDAZHAO: "FangDaZhao"};
+	r.MessageTypeConst.GroupPermission = {OWNER: "OWNER", ADMIN: "ADMINISTRATOR", MEMBER: "MEMBER"}
 	r.MessageType = {
 		Source: (function(){
 			var obj = function(id, time) {
@@ -540,7 +570,7 @@ function() {
 						type: r.MessageTypeConst.IMAGE,
 						imageId: this.imageId,
 						url: this.url
-					};m
+					};
 				},
 			}
 			return obj;

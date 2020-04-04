@@ -33,15 +33,19 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ![运行成功](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/status.png)
 
+现在尝试对你的BOT发送戳一戳中的666。
+
+![Poke消息](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/poke.png)
+
 ----
 
 所有功能均为测试版，若有BUG请开issue反馈。
 
-有关SDK方法文档请参考[SDK文档](SDK.md)
+有关SDK方法文档请参考[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
 ----
 
 ## To-Do
-- [ ] 编写SDK文档
+- [*] 编写SDK文档
 - [ ] 支持监听EventMessage
 - [ ] 将MozillaRhino整合成mirai插件
