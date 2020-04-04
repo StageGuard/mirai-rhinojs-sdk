@@ -1,60 +1,56 @@
-# English: [README_en.md](README_en.md)
-
 # mirai-rhinojs-sdk
 为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于Mozilla Rhino的SDK。
 
-## Mozilla Rhino是什么？
+## What is Mozilla Rhino？
 Mozilla Rhino: JavaScript in Java
 
 ![Rhino](https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg)
 
 Rhino is an implementation of JavaScript in Java.
 
-Rhino是一个可以在JavaScript上运行Java程序的库。
-
 ----
 
-## 快速开始：
-①获取最新版rhino运行库
+## Quick Start：
+①Fetch the newest Rhino runtime library.
 ```bash
 wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhino-1.7.12.jar
 ```
-②克隆项目
+②Clone this repo
 ```bash
 git clone https://github.com/StageGuard/mirai-rhinojs-sdk
 ```
-③将`source`文件夹与`rhino-1.7.12.jar`移动至平级目录。
+③Move`source`to the folder which is in the same with `rhino-1.7.12.jar`.
 
-④修改`demo.js`中`server`，`authKey`和`qqnum`变量。
+④Modify variable `server`，`authKey` and `qqnum` in `demo.js`
 ```javascript
-//HTTP API服务器地址
+//HTTP API server
 const server = "http://localhost:8080/";
-//HTTP API服务器验证密钥
+//HTTP API auth key
 const authKey = "stageguard";
-//要操作的机器人qq号
+//qq num
 const qqnum = "202746796";
 ```
-⑤运行脚本
+⑤Run demo script
 ```bash
 java -jar rhino-1.7.12.jar -f source/demo.js
 ```
-简单的消息捕捉功能脚本就运行起来了。
+Simple meeesage catcher script is running.
 
 ![运行成功](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/status.png)
 
-现在尝试对你的BOT发送戳一戳中的666。
+Now try to send a poke message(SIXSIXSIX) to your bot.
 
 ![Poke消息](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/poke.png)
 
 ----
 
-该项目同样可以在Android手机上运行，详细请浏览[我的博客](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/)
+This script can also run in Android phone，Please surf [my blog](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/) for more details.
 
 ----
 
-所有功能均为测试版，若有BUG请开issue反馈。
+All functions are under testing，Please open a issue if you surface a bug。
 
-有关SDK方法文档请参考[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
+All methods and usage can be found in [SDK Documentation](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
 ----
 
