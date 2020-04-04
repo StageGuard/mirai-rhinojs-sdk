@@ -1,5 +1,5 @@
 # mirai-rhinojs-sdk
-为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于Mozilla Rhino的SDK。
+Provide Mozilla Rhino JS SDK for plugin [mirai-api-http](https://github.com/mamoe/mirai-api-http) of [Mirai](https://github.com/mamoe/mirai)
 
 ## What is Mozilla Rhino？
 Mozilla Rhino: JavaScript in Java
