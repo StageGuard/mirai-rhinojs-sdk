@@ -65,6 +65,7 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 * Fix a bug which causes an error after running 30 minutes.
 * Add Mirai.Session.recall(). Now you can recall message.
 * Fix an error while error occurred when hooking meeeages.
+* Fix a bug that cannot hook other messages.
 ### Apr 4th, 2020 → 1.0_alpha
 * Initial release
 
