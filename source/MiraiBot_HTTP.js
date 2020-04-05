@@ -187,7 +187,7 @@ function() {
 									switch (p.type) {
 										case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender.id, p.sender.memberName, p.sender.permission, p.sender.group), r.MessageChain._build(p.messageChain)); break;
 										case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender.id, p.sender.nickname), r.MessageChain._build(p.messageChain)); break;
-										case "OtherMessage": listener.listenerobj.hookOtherMessage(p); break;
+										default: listener.listenerobj.hookOtherMessage(p); break;
 									}
 								}
 							}
