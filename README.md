@@ -72,6 +72,7 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 * 添加`MessageChain.addMessage`方法
 * 添加`MessageChain.addMessageF`方法
 * 添加`MessageChain.toChainArray`方法
+
 有关这些新方法的用法请看[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
 ### 2020.04.05 → 1.1_alpha

@@ -68,6 +68,7 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 * Add `MessageChain.addMessage`
 * Add `MessageChain.addMessageF`
 * Add `MessageChain.toChainArray`
+
 For the usage of these new function, please see [SDK Documentation](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
 
