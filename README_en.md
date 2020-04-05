@@ -44,7 +44,7 @@ Now try to send a poke message(SIXSIXSIX) to your bot.
 
 ----
 
-This script can also run in Android phone，Please surf [my blog](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/) for more details.
+This script can also run in Android phone，Please see [my blog](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/) for more details.
 
 ----
 
@@ -59,7 +59,17 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 - [ ] 支持监听EventMessage
 - [ ] 将MozillaRhino整合成mirai插件
 
-## Update Log
+## Changelog
+
+### 2020.04.05 → 1.2_alpha
+* Change the arguments of `MessageChain.build` 
+* Add `Session.getCachedMessage`
+* Add `MessageChain.discordMessage`
+* Add `MessageChain.addMessage`
+* Add `MessageChain.addMessageF`
+* Add `MessageChain.toChainArray`
+For the usage of these new function, please see [SDK Documentation](https://stageguard.top/p/mirai-rhinojs-sdk.html)
+
 
 ### Apr 5th, 2020 → 1.1_alpha
 * Fix a bug which causes an error after running 30 minutes.

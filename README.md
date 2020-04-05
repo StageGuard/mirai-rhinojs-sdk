@@ -65,6 +65,15 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.05 → 1.2_alpha
+* 修改`MessageChain.build`的构造方式(原来的不受影响)
+* 添加`Session.getCachedMessage`方法
+* 添加`MessageChain.discordMessage`方法
+* 添加`MessageChain.addMessage`方法
+* 添加`MessageChain.addMessageF`方法
+* 添加`MessageChain.toChainArray`方法
+有关这些新方法的用法请看[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
+
 ### 2020.04.05 → 1.1_alpha
 * 修复运行30分钟后出现的bug.
 * 添加消息撤回方法：Mirai.Session.recall().

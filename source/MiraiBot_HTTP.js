@@ -27,7 +27,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.1_alpha";
+	r.__version = "v1.2_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -287,6 +287,21 @@ function() {
 			} catch(e) {
 				Log.e("Error while recalling a message. MessageId=" + target + "\n" + e);
 			}
+		},
+		getCachedMessage: function(messageId) {
+			try {
+				var p = NetworkUtils.get(server + "messageFromId?sessionKey=" + this.sessionid + "&id=" + messageId);
+				var result = JSON.parse(p);
+				if (result.code == 5) {
+					Log.e("Message is not cached or messageid is invaild. " + result.msg + "(messageId=" + messageId + ")");
+					return new r.MessageChain();
+				} else {
+					return r.MessageChain._build(result.messageChain);
+				}
+			} catch(e) {
+				Log.e("Error while fetching a cached message. MessageId=" + messageId + "\n" + e);
+				return new r.MessageChain();
+			}
 		}
 	}
 	r.MessageListener = function(hooks) {
@@ -391,8 +406,18 @@ function() {
 		}
 		return new r.MessageChain(chains);
 	};
-	r.MessageChain.build = function() {
-		return new r.MessageChain(arguments);
+	r.MessageChain.build = function self() {
+		self.chain = [];
+		for(var i in arguments) {
+			if(arguments[i] instanceof r.MessageChain) {
+				for(var i in self.ca = arguments[i].toChainArray()) {
+					self.chain.push(self.ca[i]);
+				}
+			} else {
+				self.chain.push(arguments[i]);
+			}
+		}
+		return new r.MessageChain(self.chain);
 	};
 	r.MessageChain.prototype = {
 		length: function() {
@@ -406,20 +431,55 @@ function() {
 			}
 			return new r.MessageType[type]();
 		},
-		toSource: function() {
-			var chain = [];
+		discordMessage: function(type) {
 			for(var i in this.msg) {
-				chain.push(this.msg[i].toSource());
+				if(this.msg[i].type == type) {
+					this.msg.splice(i, 1);
+				}
 			}
-			return chain;
+			return this;
 		},
-		toString: function() {
-			var chain = [];
-			for(var i in this.msg) {
-				chain.push(JSON.stringify(this.msg[i].toSource()));
+		addMessage: function self() {
+			for(var i in arguments) {
+				if(arguments[i] instanceof r.MessageChain) {
+					for(var i in self.ca = arguments[i].toChainArray()) {
+						this.msg.push(self.ca[i]);
+					}
+				} else {
+					this.msg.push(arguments[i]);
+				}
 			}
-			return chain;
-		}
+			return this;
+		},
+		addMessageF: function self() {
+			for(var i in arguments) {
+				if(arguments[i] instanceof r.MessageChain) {
+					for(var i in self.ca = arguments[i].toChainArray()) {
+						this.msg.unshift(self.ca[i]);
+					}
+				} else {
+					this.msg.unshift(arguments[i]);
+				}
+			}
+			return this;
+		},
+		toSource: function self() {
+			self.chain = [];
+			for(var i in this.msg) {
+				self.chain.push(this.msg[i].toSource());
+			}
+			return self.chain;
+		},
+		toChainArray: function() {
+			return this.msg;
+		},
+		toString: function self() {
+			self.chain = [];
+			for(var i in this.msg) {
+				self.chain.push(JSON.stringify(this.msg[i].toSource()));
+			}
+			return self.chain;
+		},
 		
 	};
 	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}};
@@ -661,5 +721,7 @@ function() {
 	Log.w("MiraiBot_HTTP.js版本： " + r.__version);
 	Log.w("当前为不稳定版本，请保持该脚本的强制更新。");
 	Log.w("因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
+	Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
+	Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
 	return r;
 } ()
