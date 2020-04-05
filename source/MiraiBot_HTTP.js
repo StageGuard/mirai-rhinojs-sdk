@@ -9,8 +9,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.0_alpha";
-	Log.i(r.__moduleInfo);
+	r.__version = "v1.1_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -162,13 +161,16 @@ function() {
 					try {
 						while (!java.lang.Thread.interrupted()) {
 							var p = NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize);
-							if((/^\{/).test(p)) throw "INVAILD_SESSION";
-							if (p != "[]") {
-								p = eval(p)[0];
-								switch (p.type) {
-									case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender.id, p.sender.memberName, p.sender.permission, p.sender.group), r.MessageChain._build(p.messageChain)); break;
-									case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender.id, p.sender.nickname), r.MessageChain._build(p.messageChain)); break;
-									case "OtherMessage": listener.listenerobj.hookOtherMessage(p); break;
+							if((/^\{/).test(p)) {
+								Log.e("Error while hooking messages: " + JSON.parse(p).msg);
+							} else {
+								if (p != "[]") {
+									p = eval(p)[0];
+									switch (p.type) {
+										case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender.id, p.sender.memberName, p.sender.permission, p.sender.group), r.MessageChain._build(p.messageChain)); break;
+										case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender.id, p.sender.nickname), r.MessageChain._build(p.messageChain)); break;
+										case "OtherMessage": listener.listenerobj.hookOtherMessage(p); break;
+									}
 								}
 							}
 							java.lang.Thread.sleep(interval);
@@ -217,16 +219,15 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					Log.i("Message have sent(group=" + target + ")");
+					Log.i("Message have sent(group=" + target + ", messageId=" + result.messageId + ")");
+					return result.messageId;
 				} else {
-					Log.e(p);
+					Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					return 0;
 				}
 			} catch(e) {
-				this.sendGroupMessage(target, [{
-					type: "Plain",
-					text: "执行已完成，但消息发送失败:\n" + e.toString()
-				}], quoteId);
-				Log.e("Target=" + target + ", MessageChain=" + _toSource(messageChain) + "\n" + e);
+				Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				return 0;
 			}
 		},
 		sendFriendMessage: function(target, messageChain) {
@@ -240,12 +241,33 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					Log.i("Message have sent(group=" + target + ")");
+					Log.i("Message have sent(friend=" + target + ", messageId=" + result.messageId + ")");
+					return result.messageId;
 				} else {
-					Log.e(p);
+					Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					return 0;
 				}
 			} catch(e) {
-				Log.e(e);
+				Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				return 0;
+			}
+		},
+		recall: function(target) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(target)
+				};
+				var p = NetworkUtils.post(server + "recall", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				if(p.length == 0) p = "{}";
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					Log.i("Message have recalled(messageId=" + target + ")");
+				} else {
+					Log.e("Error while recalling a message. MessageId=" + target + "\n" + result.msg);
+				}
+			} catch(e) {
+				Log.e("Error while recalling a message. MessageId=" + target + "\n" + e);
 			}
 		}
 	}
@@ -618,7 +640,7 @@ function() {
 			return obj;
 		}()),
 	}
-	Log.i("MiraiBot_HTTP.js版本： " + r.__version);
+	Log.w("MiraiBot_HTTP.js版本： " + r.__version);
 	Log.w("当前为不稳定版本，请保持该脚本的强制更新。");
 	Log.w("因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
 	return r;
