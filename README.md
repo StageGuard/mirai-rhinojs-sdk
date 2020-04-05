@@ -62,3 +62,31 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 - [x] 编写SDK文档
 - [ ] 支持监听EventMessage
 - [ ] 将MozillaRhino整合成mirai插件
+
+## Update Log
+
+### 2020.04.05 → 1.1_alpha
+* 修复运行30分钟后出现的bug.
+* 添加消息撤回方法：Mirai.Session.recall().
+* 修复了捕捉消息出现错误时对错误的处理错误
+### 2020.04.04 → 1.0_alpha
+* Initial release
+
+## License
+```
+mirai-rhinojs-sdk
+Copyright (C) 2020  StageGuard
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+```

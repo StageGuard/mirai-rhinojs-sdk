@@ -36,11 +36,11 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 ```
 Simple meeesage catcher script is running.
 
-![运行成功](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/status.png)
+![Success](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/status.png)
 
 Now try to send a poke message(SIXSIXSIX) to your bot.
 
-![Poke消息](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/poke.png)
+![Poke message](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/poke.png)
 
 ----
 
@@ -58,3 +58,31 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 - [x] 编写SDK文档
 - [ ] 支持监听EventMessage
 - [ ] 将MozillaRhino整合成mirai插件
+
+## Update Log
+
+### Apr 5th, 2020 → 1.1_alpha
+* Fix a bug which causes an error after running 30 minutes.
+* Add Mirai.Session.recall(). Now you can recall message.
+* Fix an error while error occurred when hooking meeeages.
+### Apr 4th, 2020 → 1.0_alpha
+* Initial release
+
+## License
+```
+mirai-rhinojs-sdk
+Copyright (C) 2020  StageGuard
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+```
