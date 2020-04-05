@@ -57,7 +57,10 @@ require("source/NetworkUtils.js");
 //当前MiraiBot_HTTP.js为非稳定版本
 //必须强制每次启动脚本都从服务器下载
 //如因旧版本MiraiBot_HTTP.js产生的问题概不解决！
-FileIO.writeString("source/MiraiBot_HTTP.js", NetworkUtils.get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/MiraiBot_HTTP.js", null, true), true);
+Log.i("Fetching newest version of MiraiBot_HTTP.js...");
+Log.i("Please ensure that your network is avaliable for raw.githubusercontent.com.");
+FileIO.writeString("source/MiraiBot_HTTP.js", NetworkUtils.get("https://raw.githubusercontent.com/StageGuard/mirai-rhinojs-sdk/master/source/MiraiBot_HTTP.js", null, true), true);
+Log.i("Updated MiraiBot_HTTP.js");
 require("source/MiraiBot_HTTP.js");
 //以上为加载模块
 
