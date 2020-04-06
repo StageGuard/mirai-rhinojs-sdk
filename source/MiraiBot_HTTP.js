@@ -1142,6 +1142,7 @@ function() {
 	},
 	Log.w("* MiraiBot_HTTP.js版本： " + r.__version);
 	Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
+	Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
 	Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
 	Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
 	Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
