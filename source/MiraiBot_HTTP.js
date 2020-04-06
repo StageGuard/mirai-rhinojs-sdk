@@ -27,7 +27,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.2_alpha";
+	r.__version = "v1.3_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -185,9 +185,9 @@ function() {
 								if (p != "[]") {
 									p = eval(p)[0];
 									switch (p.type) {
-										case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender.id, p.sender.memberName, p.sender.permission, p.sender.group), r.MessageChain._build(p.messageChain)); break;
-										case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender.id, p.sender.nickname), r.MessageChain._build(p.messageChain)); break;
-										default: listener.listenerobj.hookOtherMessage(p); break;
+										case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
+										case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
+										default: listener.listenerobj.hookEvent(new r.EventType[p.type](p)); break;
 									}
 								}
 							}
@@ -230,7 +230,7 @@ function() {
 				var params = {
 					sessionKey: this.sessionid,
 					target: Number(target),
-					messageChain: messageChain.toSource()
+					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.toSource() : [messageChain.toSource()]
 				};
 				if (quoteId != null) params.quote = Number(quoteId);
 				var p = NetworkUtils.post(server + "sendGroupMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
@@ -253,7 +253,7 @@ function() {
 				var params = {
 					sessionKey: this.sessionid,
 					target: Number(target),
-					messageChain: messageChain.toSource()
+					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.toSource() : [messageChain.toSource()]
 				};
 				var p = NetworkUtils.post(server + "sendFriendMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
 				if(p.length == 0) p = "{}";
@@ -308,37 +308,14 @@ function() {
 		this.listenerobj = hooks;
 	};
 	
-	r.GroupSenderInfo = (function(){
-		var obj = function(id, name, permission, group) {
-			this.id = id;
-			this.name = name;
-			this.permission = permission;
-			this.group = new obj.GroupInfo(group);
+	r.GroupSenderInfo = (function self(){
+		self.r = function(json) {
+			this.id = json.id;
+			this.name = json.memberName;
+			this.permission = json.permission;
+			this.group = new r.GroupInfo(json.group);
 		}
-		obj.GroupInfo = function(group) {
-			this.id = group.id;
-			this.name = group.name;
-			this.botPermission = group.permission;
-		}
-		obj.GroupInfo.prototype = {
-			getId: function() {
-				return this.id;
-			},
-			getName: function() {
-				return this.name;
-			},
-			getBotPermission: function() {
-				return this.botPermission;
-			},
-			toString: function() {
-				return {
-					id: this.id,
-					name: this.name,
-					botPermission: this.botPermission
-				}
-			}
-		}
-		obj.prototype = {
+		self.r.prototype = {
 			getId: function() {
 				return this.id;
 			},
@@ -360,14 +337,14 @@ function() {
 				});
 			}
 		}
-		return obj;
+		return self.r;
 	}());
-	r.FriendSenderInfo = (function(){
-		var obj = function(id, name) {
-			this.id = id;
-			this.name = name;
+	r.FriendSenderInfo = (function self(){
+		self.r = function(json) {
+			this.id = json.id;
+			this.name = json.nickname;
 		}
-		obj.prototype = {
+		self.r.prototype = {
 			getId: function() {
 				return this.id;
 			},
@@ -381,10 +358,41 @@ function() {
 				});
 			}
 		}
-		return obj;
+		return self.r;
 	}());
+	r.GroupInfo = (function self(){
+		self.r = function(group) {
+			this.id = group.id;
+			this.name = group.name;
+			this.permission = group.permission;
+		}
+		self.r.prototype = {
+			getId: function() {
+				return this.id;
+			},
+			getName: function() {
+				return this.name;
+			},
+			getPermission: function() {
+				return this.permission;
+			},
+			toString: function() {
+				return {
+					id: this.id,
+					name: this.name,
+					permission: this.permission
+				}
+			}
+		}
+		return self.r;
+	}());
+	r.GroupInfo.Permission = {
+		OWNER: "OWNER",
+		ADMIN: "ADMINISTRATOR",
+		MEMBER: "MEMBER",
+	}
 	r.MessageChain = function(messageChain) {
-		this.msg = messageChain;
+		this.msg = messageChain ? messageChain : [];
 	}
 	r.MessageChain._build = function(msg) {
 		var chains = [];
@@ -492,12 +500,12 @@ function() {
 		FANGDAZHAO: "FangDaZhao"
 	};
 	r.MessageType = {
-		Source: (function(){
-			var obj = function(id, time) {
+		Source: (function self(){
+			self.r = function(id, time) {
 				this.id = id ? id : null;
 				this.time = time ? time : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.SOURCE,
 				getId: function(){
 					return this.id;
@@ -513,16 +521,16 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Quote: (function(){
-			var obj = function(id, senderId, groupId, origin) {
+		Quote: (function self(){
+			self.r = function(id, senderId, groupId, origin) {
 				this.id = id ? id : null;
 				this.groupId = groupId ? groupId : null;
 				this.senderId = senderId ? senderId : null;
 				this.origin = origin ? origin : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.QUOTE,
 				getId: function() {
 					return this.id;
@@ -545,14 +553,14 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		At: (function(){
-			var obj = function(target, display) {
+		At: (function self(){
+			self.r = function(target, display) {
 				this.target = target ? target : null;
 				this.display = display ? display : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.AT,
 				getTarget: function() {
 					return this.target;
@@ -568,24 +576,24 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		AtAll: (function(){
-			var obj = function() {}
-			obj.type = r.MessageTypeConst.ATALL,
-			obj.prototype = {
+		AtAll: (function self(){
+			self.r = function() {}
+			self.r.prototype = {
+				type: r.MessageTypeConst.ATALL,
 				toSource: function() {
 					return {type: r.MessageTypeConst.ATALL};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Face: (function(){
-			var obj = function(faceId, name) {
+		Face: (function self(){
+			self.r = function(faceId, name) {
 				this.faceId = faceId ? faceId : null;
 				this.name = name ? name : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.FACE,
 				getFaceId: function() {
 					return this.faceId;
@@ -602,13 +610,13 @@ function() {
 					return s;
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Plain: (function(){
-			var obj = function(text) {
+		Plain: (function self(){
+			self.r = function(text) {
 				this.text = text ? String(text) : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.PLAIN,
 				getText: function(){
 					return this.text;
@@ -620,14 +628,14 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Image: (function(){
-			var obj = function(imageId, url) {
+		Image: (function self(){
+			self.r = function(imageId, url) {
 				this.imageId = imageId ? imageId : null;
 				this.url = url ? url : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.IMAGE,
 				getImageId: function(){
 					return this.imageId;
@@ -643,13 +651,13 @@ function() {
 					};m
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Xml: (function(){
-			var obj = function(xml) {
+		Xml: (function self(){
+			self.r = function(xml) {
 				this.xml = xml ? xml : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.XML,
 				getXml: function() {
 					return this.xml;
@@ -661,13 +669,13 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Json: (function(){
-			var obj = function(json) {
+		Json: (function self(){
+			self.r = function(json) {
 				this.json = json ? json : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.JSON,
 				getJson: function() {
 					return this.json;
@@ -679,13 +687,13 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		App: (function(){
-			var obj = function(app) {
+		App: (function self(){
+			self.r = function(app) {
 				this.app = app ? app : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.APP,
 				getApp: function() {
 					return this.app;
@@ -697,13 +705,13 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-		Poke: (function(){
-			var obj = function(name) {
+		Poke: (function self(){
+			self.r = function(name) {
 				this.name = name ? name : null;
 			}
-			obj.prototype = {
+			self.r.prototype = {
 				type: r.MessageTypeConst.POKE,
 				getName: function() {
 					return this.name;
@@ -715,12 +723,427 @@ function() {
 					};
 				},
 			}
-			return obj;
+			return self.r;
 		}()),
-	}
-	Log.w("MiraiBot_HTTP.js版本： " + r.__version);
-	Log.w("当前为不稳定版本，请保持该脚本的强制更新。");
-	Log.w("因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
+	},
+	r.EventTypeConst = {
+		BOT_ONLINE: "BotOnlineEvent",
+		BOT_OFFLINE: "BotOfflineEventActive",
+		BOT_OFFLINE_FORCE: "BotOfflineEventForce",
+		BOT_OFFLINE_DROPPED: "BotOfflineEventDropped",
+		BOT_RELOGIN: "BotReloginEvent",
+		GROUP_RECALL: "GroupRecallEvent",
+		FRIEND_RECALL: "FriendRecallEvent",
+		BOT_GROUP_PERMISSION_CHANGE: "BotGroupPermissionChangeEvent",
+		BOT_MUTE: "BotMuteEvent",
+		BOT_UNMUTE: "BotUnmuteEvent",
+		BOT_JOIN_GROUP: "BotJoinGroupEvent",
+		GROUP_NAME_CHANGE: "GroupNameChangeEvent",
+		GROUP_ENTRANCE_ANN_CHANGE: "GroupEntranceAnnouncementChangeEvent",
+		GROUP_MUTE_ALL: "GroupMuteAllEvent",
+		GROUP_ALLOW_ANONYMOUS_CHAT: "GroupAllowAnonymousChatEvent",
+		GROUP_ALLOW_CONFESS_TALK: "GroupAllowConfessTalkEvent",
+		GROUP_ALLOW_MEMBER_INVITE: "GroupAllowMemberInviteEvent",
+		GROUP_MEMBER_JOIN: "MemberJoinEvent",
+		GROUP_MEMBER_KICK: "MemberLeaveEventKick",
+		GROUP_MEMBER_QUIT: "MemberLeaveEventQuit",
+		GROUP_MEMBER_NAME_CHANGE: "MemberCardChangeEvent",
+		GROUP_MEMBER_FAME_CHANHE: "MemberSpecialTitleChangeEvent",
+		GROUP_MEMBER_PERMISSION_CHANGE: "MemberPermissionChangeEvent",
+		GROUP_MEMBER_MUTE: "MemberMuteEvent",
+		GROUP_MEMBER_UNMUTE: "MemberUnmuteEvent"
+	},
+	r.EventType = {
+		BotOnlineEvent: (function self(){
+			self.r = function(json) {
+				this.id = json.qq;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_ONLINE,
+				getId: function() {
+					return this.id;
+				}
+			}
+			return self.r;
+		}()),
+		BotOfflineEvent: (function self(){
+			self.r = function(json) {
+				this.id = json.qq;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_OFFLINE,
+				getId: function() {
+					return this.id;
+				}
+			}
+			return self.r;
+		}()),
+		BotOfflineEventForce: (function self(){
+			self.r = function(json) {
+				this.id = json.qq;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_OFFLINE_FORCE,
+				getId: function() {
+					return this.id;
+				}
+			}
+			return self.r;
+		}()),
+		BotOfflineEventDropped: (function self(){
+			self.r = function(json) {
+				this.id = json.qq;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_OFFLINE_DROPPED,
+				getId: function() {
+					return this.id;
+				}
+			}
+			return self.r;
+		}()),
+		BotReloginEvent: (function self(){
+			self.r = function(json) {
+				this.id = json.qq;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_RELOGIN,
+				getId: function() {
+					return this.id;
+				}
+			}
+			return self.r;
+		}()),
+		GroupRecallEvent: (function self(){
+			self.r = function(json) {
+				this.senderId = json.authorId;
+				this.messageId = json.messageId;
+				this.time = json.time;
+				this.group = new r.GroupInfo(json.group);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_RECALL,
+				getSenderId: function() {
+					return this.senderId;
+				},
+				getMessageId: function() {
+					return this.messageId;
+				},
+				getTime: function() {
+					return this.time;
+				},
+				getGroup: function() {
+					return this.group;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		FriendRecallEvent: (function self(){
+			self.r = function(json) {
+				this.senderId = json.authorId;
+				this.messageId = json.messageId;
+				this.time = json.time;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.FRIEND_RECALL,
+				getSenderId: function() {
+					return this.senderId;
+				},
+				getMessageId: function() {
+					return this.messageId;
+				},
+				getTime: function() {
+					return this.time;
+				},
+			}
+			return self.r;
+		}()),
+		BotGroupPermissionChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.group = new r.GroupInfo(json.group);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_GROUP_PERMISSION_CHANGE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getGroup: function() {
+					return this.group;
+				},
+			}
+			return self.r;
+		}()),
+		BotMuteEvent: (function self(){
+			self.r = function(json) {
+				this.duration = json.durationSeconds;
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_MUTE,
+				getDuration: function() {
+					return this.duration;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		BotUnmuteEvent: (function self(){
+			self.r = function(json) {
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_UNMUTE,
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		BotJoinGroupEvent: (function self(){
+			self.r = function(json) {
+				this.group = new r.GroupInfo(json.group);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.BOT_JOIN_GROUP,
+				getGroup: function() {
+					return this.group;
+				},
+			}
+			return self.r;
+		}()),
+		GroupNameChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.group = new r.GroupInfo(json.group);
+				this.isByBot = json.isByBot;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_NAME_CHANGE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getGroup: function() {
+					return this.group;
+				},
+				isChangedByBot: function() {
+					return this.isByBot;
+				}
+			}
+			return self.r;
+		}()),
+		GroupEntranceAnnouncementChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.group = new r.GroupInfo(json.group);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_ENTRANCE_ANN_CHANGE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getGroup: function() {
+					return this.group;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		GroupMuteAllEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.group = new r.GroupInfo(json.group);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MUTE_ALL,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getGroup: function() {
+					return this.group;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		MemberJoinEvent: (function self(){
+			self.r = function(json) {
+				this.member = new r.GroupSenderInfo(json.member);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_JOIN,
+				getMember: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		MemberLeaveEventKick: (function self(){
+			self.r = function(json) {
+				this.member = new r.GroupSenderInfo(json.member);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_KICK,
+				getTarget: function() {
+					return this.member;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		MemberLeaveEventQuit: (function self(){
+			self.r = function(json) {
+				this.member = new r.GroupSenderInfo(json.member);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_QUIT,
+				getMember: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		MemberCardChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.member = new r.GroupSenderInfo(json.member);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_NAME_CHANGE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getTarget: function() {
+					return this.member;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+			}
+			return self.r;
+		}()),
+		MemberSpecialTitleChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.member = new r.GroupSenderInfo(json.member);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_FAME_CHANHE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getTarget: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		MemberPermissionChangeEvent: (function self(){
+			self.r = function(json) {
+				this.before = json.origin;
+				this.after = json.current;
+				this.member = new r.GroupSenderInfo(json.member);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_PERMISSION_CHANGE,
+				getBefore: function() {
+					return this.before;
+				},
+				getAfter: function() {
+					return this.after;
+				},
+				getTarget: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		MemberMuteEvent: (function self(){
+			self.r = function(json) {
+				this.duration = json.durationSeconds;
+				this.member = new r.GroupSenderInfo(json.member);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_MUTE,
+				getDuration: function() {
+					return this.duration;
+				},
+				getOperator: function() {
+					return this.operator;
+				},
+				getTarget: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		MemberUnmuteEvent: (function self(){
+			self.r = function(json) {
+				this.member = new r.GroupSenderInfo(json.member);
+				this.operator = new r.GroupSenderInfo(json.operator);
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.GROUP_MEMBER_UNMUTE,
+				getOperator: function() {
+					return this.operator;
+				},
+				getTarget: function() {
+					return this.member;
+				},
+			}
+			return self.r;
+		}()),
+		//匿名，坦白说和允许群组成员邀请事件没啥用，就不写了
+		//放在这的原因是防止hookEvent时出现找不到对象的错误。
+		GroupAllowAnonymousChatEvent: function(){},
+		GroupAllowConfessTalkEvent: function(){},
+		GroupAllowMemberInviteEvent: function(){},
+	},
+	Log.w("* MiraiBot_HTTP.js版本： " + r.__version);
+	Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
+	Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
+	Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
 	Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
 	Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
 	return r;

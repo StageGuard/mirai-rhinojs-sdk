@@ -65,6 +65,15 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.06 → 1.3_alpha
+* `Session.sendMessage`现在直接可以发送`Mirai.MessageType.?`消息而无需仅为了一个消息对象构建消息链。
+* `Mirai.GroupInfo.getBotPermission`方法改名为`Mirai.GroupInfo.getPermission`
+* 添加`Mirai.GroupInfo.Permission`群组权限常量OWNER, ADMIN和MEMBER
+* 添加`Mirai.EventType`事件类型和`Mirai.EventTypeConst`事件类型常量。也就是说现在支持监听事件了。
+* (`Mirai.MessageListener`中的`hookOtherMessage(JSON msg)`改成`hookEvent(Mirai.EventType.? event)`)
+* demo.js更新，为了展示这次MiraiBot_HTTP.js的新特性。
+* 修复了一些遗留bug。
+
 ### 2020.04.05 → 1.2_alpha
 * 修改`MessageChain.build`的构造方式(原来的不受影响)
 * 添加`Session.getCachedMessage`方法

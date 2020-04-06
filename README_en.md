@@ -61,7 +61,16 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 
 ## Changelog
 
-### 2020.04.05 → 1.2_alpha
+### Apr 6th, 2020 → 1.3_alpha
+* Now you can call `Session.sendMessage` to send `Mirai.MessageType.?` directly instead of building a message chain for a only message object.
+* Change `Mirai.GroupInfo.getBotPermission` to `Mirai.GroupInfo.getPermission`
+* Add constant OWNER, ADMIN and MEMBER to `Mirai.GroupInfo.Permission`
+* Add`Mirai.EventType` and `Mirai.EventTypeConst`.\nIn another word that now support hook various events.
+* (Change `hookOtherMessage(JSON msg)` to `hookEvent(Mirai.EventType.? event)` in function `Mirai.MessageListener`)
+* Update demo.js for showing new features of MiraiBot_HTTP.js
+* Fix some remaining bugs.
+
+### Apr 5th, 2020 → 1.2_alpha
 * Change the arguments of `MessageChain.build` 
 * Add `Session.getCachedMessage`
 * Add `MessageChain.discordMessage`
