@@ -111,7 +111,7 @@ miraiSession.setMessageListener(new Mirai.MessageListener({
 			//成员撤回消息显示消息内容
 			case Mirai.EventTypeConst.GROUP_RECALL: {
 				if(gRecalledMsgId.indexOf(event.getMessageId()) != -1) return;
-				if(event.getOperator().getPermission() == (Mirai.GroupInfo.Permission.ADMIN || Mirai.GroupInfo.Permission.OWNER)) {
+				if(event.getOperator().getPermission() == Mirai.GroupInfo.Permission.ADMIN || event.getOperator().getPermission() == Mirai.GroupInfo.Permission.OWNER) {
 					miraiSession.sendGroupMessage(event.getGroup().getId(), new Mirai.MessageType.Plain("Administrator " + event.getOperator().getName() + " recalled a member message."));
 				} else {
 					var recalledMessage = miraiSession.getCachedMessage(event.getMessageId());
