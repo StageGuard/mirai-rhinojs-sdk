@@ -178,17 +178,15 @@ function() {
 				run: function() {
 					try {
 						while (!java.lang.Thread.interrupted()) {
-							var p = NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize);
-							if((/^\{/).test(p)) {
-								Log.e("Error while hooking messages: " + JSON.parse(p).msg);
-							} else {
-								if (p != "[]") {
-									p = eval(p)[0];
-									switch (p.type) {
-										case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
-										case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
-										default: listener.listenerobj.hookEvent(new r.EventType[p.type](p)); break;
-									}
+							var p = JSON.parse(NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize));
+							if(p.code != 0) {
+								Log.e("Error while hooking messages: " + p.msg);
+							} else if(p.data.length != 0){
+								p = p.data[0];
+								switch (p.type) {
+									case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
+									case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
+									default: listener.listenerobj.hookEvent(new r.EventType[p.type](p)); break;
 								}
 							}
 							java.lang.Thread.sleep(interval);
@@ -405,6 +403,7 @@ function() {
 				case r.MessageTypeConst.PLAIN: chains.push(new r.MessageType.Plain(msg[i].text)); break;
 				case r.MessageTypeConst.FACE: chains.push(new r.MessageType.Face(msg[i].faceId, msg[i].name)); break;
 				case r.MessageTypeConst.IMAGE: chains.push(new r.MessageType.Image(msg[i].imageId, msg[i].url)); break;
+				case r.MessageTypeConst.FLASHIMAGE: chains.push(new r.MessageType.FlashImage(msg[i].imageId, msg[i].url)); break;
 				case r.MessageTypeConst.XML: chains.push(new r.MessageType.Xml(msg[i].xml)); break;
 				case r.MessageTypeConst.JSON: chains.push(new r.MessageType.Json(msg[i].json)); break;
 				case r.MessageTypeConst.APP: chains.push(new r.MessageType.App(msg[i].content)); break;
@@ -490,7 +489,7 @@ function() {
 		},
 		
 	};
-	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}};
+	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", FLASHIMAGE: "FlashImage", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}};
 	r.MessageTypeConst.PokeType = {
 		POKE: "Poke",
 		SHOWLOVE: "ShowLove",
@@ -631,9 +630,10 @@ function() {
 			return self.r;
 		}()),
 		Image: (function self(){
-			self.r = function(imageId, url) {
+			self.r = function(imageId, url, path) {
 				this.imageId = imageId ? imageId : null;
 				this.url = url ? url : null;
+				this.path = path ? path : null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.IMAGE,
@@ -646,6 +646,30 @@ function() {
 				toSource: function() {
 					return {
 						type: r.MessageTypeConst.IMAGE,
+						imageId: this.imageId,
+						url: this.url
+					};m
+				},
+			}
+			return self.r;
+		}()),
+		FlashImage: (function self(){
+			self.r = function(imageId, url, path) {
+				this.imageId = imageId ? imageId : null;
+				this.url = url ? url : null;
+				this.path = path ? path : null;
+			}
+			self.r.prototype = {
+				type: r.MessageTypeConst.FLASHIMAGE,
+				getImageId: function(){
+					return this.imageId;
+				},
+				getUrl: function(){
+					return this.url;
+				},
+				toSource: function() {
+					return {
+						type: r.MessageTypeConst.FLASHIMAGE,
 						imageId: this.imageId,
 						url: this.url
 					};m

@@ -65,6 +65,14 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.06 → 1.3.1_alpha
+
+* 适配`mirai-api-http` 1.5版本的接口`/fetchMessage`返回的数据格式。
+* 添加`Mirai.MessageType.FlashImage`闪照消息类型，用法与`Mirai.MessageType.Image`相同。
+* 为`Mirai.MessageType.Image`构造函数增加了`path`参数，表示发送本地图片的路径，该路径是相对于`plugins/MiraiAPIHTTP/images/`的。
+
+文档未更新。
+
 ### 2020.04.06 → 1.3_alpha
 * `Session.sendMessage`现在直接可以发送`Mirai.MessageType.?`消息而无需仅为了一个消息对象构建消息链。
 * `Mirai.GroupInfo.getBotPermission`方法改名为`Mirai.GroupInfo.getPermission`
@@ -73,6 +81,8 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 * (`Mirai.MessageListener`中的`hookOtherMessage(JSON msg)`改成`hookEvent(Mirai.EventType.? event)`)
 * demo.js更新，为了展示这次MiraiBot_HTTP.js的新特性。
 * 修复了一些遗留bug。
+
+文档未更新。
 
 ### 2020.04.05 → 1.2_alpha
 * 修改`MessageChain.build`的构造方式(原来的不受影响)

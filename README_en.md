@@ -61,6 +61,13 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 
 ## Changelog
 
+### 2020.04.06 → 1.3.1_alpha
+
+* Adapt data received from `/fetchMessage` for `mirai-api-http` v1.5.
+* Add `Mirai.MessageType.FlashImage` message， usege is the same with `Mirai.MessageType.Image`
+* Add param `path` to the constructor of `Mirai.MessageType.(Flash)Image`
+
+
 ### Apr 6th, 2020 → 1.3_alpha
 * Now you can call `Session.sendMessage` to send `Mirai.MessageType.?` directly instead of building a message chain for a only message object.
 * Change `Mirai.GroupInfo.getBotPermission` to `Mirai.GroupInfo.getPermission`
