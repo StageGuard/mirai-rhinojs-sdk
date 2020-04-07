@@ -23,7 +23,7 @@ wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhin
 .jar
 ```
 
-之后你需要：修改`demo.js`中`server`，`authKey`和`qqnum`变量。
+之后你需要修改`demo.js`中`server`，`authKey`和`qqnum`变量。
 ```javascript
 //HTTP API服务器地址
 const server = "http://localhost:8080/";
