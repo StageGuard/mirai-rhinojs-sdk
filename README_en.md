@@ -61,12 +61,20 @@ All methods and usage can be found in [SDK Documentation](https://stageguard.top
 
 ## Changelog
 
+### 2020.04.07 → 1.4_alpha
+
+* Change `Permission` parent to `Mirai.GroupInfo`
+* Change `GroupSenderInfo.getGroupInfo()` to `GroupSenderInfo.getGroup()`
+* Add and support hooking event: `Mirai.EventType(Const)`
+* `Change Mirai.MessageListener.hookOtherMessage(JSON msg)` to `Mirai.MessageListener.hookEvent(Mirai.EventType.? event)` for hooking events.
+
+Doc has updated!
+
 ### 2020.04.06 → 1.3.1_alpha
 
 * Adapt data received from `/fetchMessage` for `mirai-api-http` v1.5.
 * Add `Mirai.MessageType.FlashImage` message， usege is the same with `Mirai.MessageType.Image`
 * Add param `path` to the constructor of `Mirai.MessageType.(Flash)Image`
-
 
 ### Apr 6th, 2020 → 1.3_alpha
 * Now you can call `Session.sendMessage` to send `Mirai.MessageType.?` directly instead of building a message chain for a only message object.
