@@ -65,6 +65,15 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.06 → 1.4_alpha
+
+* 修改了`Permission`的父类为`Mirai.GroupInfo`
+* `GroupSenderInfo.getGroupInfo()`改为`GroupSenderInfo.getGroup()`
+* 添加了`Mirai.EventType(Const)`事件类型
+* 添加了闪照`Mirai.MessageType.FlashImage`的用法，修改了`Mirai.MessageType.Image`参数。
+
+文档已更新。
+
 ### 2020.04.06 → 1.3.1_alpha
 
 * 适配`mirai-api-http` 1.5版本的接口`/fetchMessage`返回的数据格式。
