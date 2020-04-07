@@ -11,17 +11,17 @@ Rhino is an implementation of JavaScript in Java.
 ----
 
 ## Quick Start：
-①Fetch the newest Rhino runtime library.
 ```bash
+#clone mirai-rhiojs
+git clone https://github.com/StageGuard/mirai-rhinojs-sdk
+#download rhino
 wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhino-1.7.12.jar
 ```
 ②Clone this repo
 ```bash
 git clone https://github.com/StageGuard/mirai-rhinojs-sdk
 ```
-③Move`source`to the folder which is in the same with `rhino-1.7.12.jar`.
-
-④Modify variable `server`，`authKey` and `qqnum` in `demo.js`
+After this, you need to modify variable `server`，`authKey` and `qqnum` in `demo.js`
 ```javascript
 //HTTP API server
 const server = "http://localhost:8080/";
