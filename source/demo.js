@@ -82,7 +82,7 @@ miraiSession.setMessageListener(new Mirai.MessageListener({
 	hookGroupMessage: function(sender, message) {
 		Log.i("\nCapturedGroupMessage: \n   SenderInfo: " + sender.toString() + "\n   MessageChain: " + message.toString());
 		/*if(message.getMessage(Mirai.MessageTypeConst.PLAIN).getText() == "recall") {
-			var msgid = miraiSession.sendGroupMessage(sender.getGroupInfo().getId(), Mirai.MessageChain.build(
+			var msgid = miraiSession.sendGroupMessage(sender.getGroup().getId(), Mirai.MessageChain.build(
 				new Mirai.MessageType.Plain("message")
 			));
 			miraiSession.recall(msgid);
@@ -110,7 +110,7 @@ miraiSession.setMessageListener(new Mirai.MessageListener({
 			//管理员撤回成员消息不显示撤回内容
 			//成员撤回消息显示消息内容
 			case Mirai.EventTypeConst.GROUP_RECALL: {
-				if(gRecalledMsgId.indexOf(event.getMessageId()) != -1) return;
+				if(gRecalledMsgId.indexOf(event.getMessageId()) == -1) return;
 				if(event.getOperator().getPermission() == Mirai.GroupInfo.Permission.ADMIN || event.getOperator().getPermission() == Mirai.GroupInfo.Permission.OWNER) {
 					miraiSession.sendGroupMessage(event.getGroup().getId(), new Mirai.MessageType.Plain("Administrator " + event.getOperator().getName() + " recalled a member message."));
 				} else {
@@ -150,7 +150,7 @@ miraiSession.setMessageListener(new Mirai.MessageListener({
 		}
 	}
 }));
-miraiSession.setVerifyThreadLoopInterval(10000)
+miraiSession.setVerifyThreadLoopInterval(15*6*10000)
 //
 //开启循环校验线程(默认每25分钟校验一次，30分钟若无检验则HTTP API自动销毁该session)
 miraiSession.startVerifyThread();

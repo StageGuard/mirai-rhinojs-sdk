@@ -27,7 +27,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.3_alpha";
+	r.__version = "v1.4_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -138,7 +138,7 @@ function() {
 								throw "Permission denied for bot" + qqnum;
 								break;
 							case 0:
-								Log.i("Session is verified: " + sessionid);
+								r.Log.i("Session is verified: " + sessionid);
 								break;
 							}
 							java.lang.Thread.sleep(interval);
@@ -146,7 +146,7 @@ function() {
 						return;
 					} catch(e) {
 						if (! (/InterruptedException/i).test(e.toString())) {
-							Log.e(e);
+							r.Log.e(e);
 						}
 					}
 				},
@@ -180,7 +180,7 @@ function() {
 						while (!java.lang.Thread.interrupted()) {
 							var p = JSON.parse(NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize));
 							if(p.code != 0) {
-								Log.e("Error while hooking messages: " + p.msg);
+								r.Log.e(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg));
 							} else if(p.data.length != 0){
 								p = p.data[0];
 								switch (p.type) {
@@ -218,9 +218,9 @@ function() {
 			if (result.code == 0) {
 				this.stopVerifyThread();
 				this.stopListen();
-				Log.i("Session \"" + this.sessionid + "\" is released.");
+				r.Log.i("Session \"" + this.sessionid + "\" is released.");
 			} else {
-				Log.i("Session \"" + this.sessionid + "\" is not released.");
+				r.Log.i("Session \"" + this.sessionid + "\" is not released.");
 			}
 		},
 		sendGroupMessage: function(target, messageChain, quoteId) {
@@ -235,14 +235,14 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					Log.i("Message have sent(group=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.v("Message have sent(group=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
-					Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					r.Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
 					return 0;
 				}
 			} catch(e) {
-				Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				r.Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
 				return 0;
 			}
 		},
@@ -257,14 +257,14 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					Log.i("Message have sent(friend=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.v("Message have sent(friend=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
-					Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					r.Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
 					return 0;
 				}
 			} catch(e) {
-				Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				r.Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
 				return 0;
 			}
 		},
@@ -278,12 +278,15 @@ function() {
 				if(p.length == 0) p = "{}";
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					Log.i("Message have recalled(messageId=" + target + ")");
+					r.Log.v("Message have recalled(messageId=" + target + ")");
+					return target;
 				} else {
-					Log.e("Error while recalling a message. MessageId=" + target + "\n" + result.msg);
+					r.Log.e("Error while recalling a message. MessageId=" + target + "\n" + result.msg);
+					return 0;
 				}
 			} catch(e) {
-				Log.e("Error while recalling a message. MessageId=" + target + "\n" + e);
+				r.Log.e("Error while recalling a message. MessageId=" + target + "\n" + e);
+				return 0;
 			}
 		},
 		getCachedMessage: function(messageId) {
@@ -291,13 +294,13 @@ function() {
 				var p = NetworkUtils.get(server + "messageFromId?sessionKey=" + this.sessionid + "&id=" + messageId);
 				var result = JSON.parse(p);
 				if (result.code == 5) {
-					Log.e("Message is not cached or messageid is invaild. " + result.msg + "(messageId=" + messageId + ")");
+					r.Log.e("Message is not cached or messageid is invaild. " + result.msg + "(messageId=" + messageId + ")");
 					return new r.MessageChain();
 				} else {
 					return r.MessageChain._build(result.messageChain);
 				}
 			} catch(e) {
-				Log.e("Error while fetching a cached message. MessageId=" + messageId + "\n" + e);
+				r.Log.e("Error while fetching a cached message. MessageId=" + messageId + "\n" + e);
 				return new r.MessageChain();
 			}
 		}
@@ -323,7 +326,7 @@ function() {
 			getPermission: function() {
 				return this.permission;
 			},
-			getGroupInfo: function() {
+			getGroup: function() {
 				return this.group;
 			},
 			toString: function() {
@@ -1164,12 +1167,32 @@ function() {
 		GroupAllowConfessTalkEvent: function(){},
 		GroupAllowMemberInviteEvent: function(){},
 	},
-	Log.w("* MiraiBot_HTTP.js版本： " + r.__version);
-	Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
-	Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
-	Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
-	Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
-	Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
-	Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
+	r.Log = {
+		i: function(msg) {
+			java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][INFO] " + String(msg));
+		},
+		w: function(msg) {
+			java.lang.System.out.println("\u001B[33m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][WARNING] " + String(msg) + "\u001B[0m");
+		},
+		v: function(msg) {
+			java.lang.System.out.println("\u001B[32m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][V] " + String(msg) + "\u001B[0m");
+		},
+		e: function(msg) {
+			java.lang.System.out.println("\u001B[31m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][ERROR] " + (function() {
+				if (msg instanceof Error) {
+					return "Error: " + msg.toString() + "(" + msg.lineNumber + ")";
+				} else {
+					return msg;
+				}
+			} ()) + "\u001B[0m");
+		},
+	}
+	r.Log.w("* MiraiBot_HTTP.js版本： " + r.__version);
+	r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
+	r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
+	r.Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
+	r.Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
+	r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
+	r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
 	return r;
 } ()
