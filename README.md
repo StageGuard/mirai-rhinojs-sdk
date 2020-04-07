@@ -15,17 +15,15 @@ Rhino是一个可以在JavaScript上运行Java程序的库。
 ----
 
 ## 快速开始：
-①获取最新版rhino运行库
 ```bash
-wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhino-1.7.12.jar
-```
-②克隆项目
-```bash
+#克隆项目
 git clone https://github.com/StageGuard/mirai-rhinojs-sdk
+#获取最新版rhino运行库
+wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhino-1.7.12
+.jar
 ```
-③将`source`文件夹与`rhino-1.7.12.jar`移动至平级目录。
 
-④修改`demo.js`中`server`，`authKey`和`qqnum`变量。
+之后你需要：修改`demo.js`中`server`，`authKey`和`qqnum`变量。
 ```javascript
 //HTTP API服务器地址
 const server = "http://localhost:8080/";
