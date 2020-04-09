@@ -1204,6 +1204,7 @@ function() {
 	r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
 	r.Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
 	r.Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
+	r.Log.e("* 重要：demo.js更新解决运行30分钟后报Session不存在的问题，请浏览仓库demo.js查看解决方案");
 	r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
 	r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
 	return r;

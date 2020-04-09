@@ -139,18 +139,16 @@ miraiSession.setMessageListener(new Mirai.MessageListener({
 			Log.w("Server returned HTTP response code: 500. Restarting listen thread...");
 			miraiSession.stopListen();
 			miraiSession.startListen();
-		//无有效session，经常发生在启动mirai wrapper console后首次启动脚本
-		//推测原因：消息监听线程执行比验证线程快了一步
-		//解决方案①：重启消息监听线程
-		} else/* if ((/INVAILD_SESSION/i).test(error.toString())) */{
-			/*Log.w("Invaild session. Restarting listen thread...");
-			miraiSession.stopListen();
-			miraiSession.startListen();*/
-			Log.e(error.toString() + error.lineNumber)
+		//无有效session，code:3为http api返回代码，常发生在运行30分钟后
+		//解决办法：重认证即可
+		} else if ((/3/i).test(error.toString())) {
+			Log.w("Invaild session. Restarting listen thread...");
+			miraiSession.reAuth();
+		} else {
+			Log.e(error);
 		}
 	}
 }));
-miraiSession.setVerifyThreadLoopInterval(15*6*10000)
 //
 //开启循环校验线程(默认每25分钟校验一次，30分钟若无检验则HTTP API自动销毁该session)
 miraiSession.startVerifyThread();
