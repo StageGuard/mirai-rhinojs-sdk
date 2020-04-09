@@ -1,5 +1,3 @@
-# English: [README_en.md](README_en.md)
-
 # mirai-rhinojs-sdk
 为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于Mozilla Rhino的SDK。
 
@@ -64,6 +62,14 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 - [ ] 将MozillaRhino整合成mirai插件
 
 ## 更新日志
+
+### 2020.04.07 → 1.4.1_alpha
+
+* 为`Mirai.GroupInfo`的构造函数添加null判断
+* `Mirai.connect()`中的post auth修改到`Mirai.auth()`，添加`Mirai.Session.reAuth()`用于session失效后的重认证
+* 修复了小bug
+
+文档已更新。
 
 ### 2020.04.07 → 1.4_alpha
 

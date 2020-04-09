@@ -27,7 +27,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.4_alpha";
+	r.__version = "v1.4.1_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -37,10 +37,7 @@ function() {
 		},
 		connect: function() {
 			if (this.server == null || this.auth == null) throw "Server host or authenticate key isnt set";
-			var p = NetworkUtils.post(this.server + "auth", JSON.stringify({
-				authKey: this.auth
-			}));
-			var result = JSON.parse(p);
+			var result = r.auth(this.server, this.auth);
 			if (result.code != 0) {
 				throw "Authenticate key is invaild.";
 			} else {
@@ -48,17 +45,24 @@ function() {
 				var session = new r.Session(result.session);
 				session.setAttributes({
 					server: this.server,
-					qqnum: this.qqnum
+					qqnum: this.qqnum,
+					authKey: this.auth
 				});
 				return session;
 			}
 		}
+	}
+	r.auth = function(server, key) {
+		return JSON.parse(NetworkUtils.post(server + "auth", JSON.stringify({
+			authKey: key
+		})));
 	}
 
 	r.Session = function(id) {
 		this.sessionid = id;
 		this.qqnum = null;
 		this.server = null;
+		this.authKey = null;
 
 		this.hooksize = 10;
 
@@ -84,6 +88,7 @@ function() {
 		setAttributes: function(attributeList) {
 			this.qqnum = attributeList.qqnum ? attributeList.qqnum: null;
 			this.server = attributeList.server ? attributeList.server: null;
+			this.authKey = attributeList.authKey ? attributeList.authKey: null;
 		},
 		getQQNumber: function(id) {
 			return this.qqnum;
@@ -101,6 +106,14 @@ function() {
 		},
 		setHookSize: function(size) {
 			this.hooksize = size;
+		},
+		reAuth: function() {
+			var result = r.auth(this.server, this.authKey);
+			if (result.code != 0) {
+				throw "Failed to reauthenticate.";
+			} else {
+				this.setSessionId(result.session);
+			}
 		},
 		startVerifyThread: function() {
 			if (this.verifyLoopThread != null && this.verifyThreadStatus == 1) {
@@ -162,7 +175,6 @@ function() {
 		},
 
 		startListen: function() {
-			
 			if (this.listenLoopThread != null && this.listenThreadStatus == 1) {
 				this.listenLoopThread.interrupt();
 				this.listenLoopThread = null;
@@ -180,7 +192,7 @@ function() {
 						while (!java.lang.Thread.interrupted()) {
 							var p = JSON.parse(NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize));
 							if(p.code != 0) {
-								r.Log.e(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg));
+								listener.listenerobj.hookError(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg));
 							} else if(p.data.length != 0){
 								p = p.data[0];
 								switch (p.type) {
@@ -311,10 +323,10 @@ function() {
 	
 	r.GroupSenderInfo = (function self(){
 		self.r = function(json) {
-			this.id = json.id;
-			this.name = json.memberName;
-			this.permission = json.permission;
-			this.group = new r.GroupInfo(json.group);
+			this.id = (json == null) ? null : json.id;
+			this.name = (json == null) ? null : json.memberName;
+			this.permission = (json == null) ? null : json.permission;
+			this.group = (json == null) ? null : new r.GroupInfo(json.group);
 		}
 		self.r.prototype = {
 			getId: function() {
@@ -342,8 +354,8 @@ function() {
 	}());
 	r.FriendSenderInfo = (function self(){
 		self.r = function(json) {
-			this.id = json.id;
-			this.name = json.nickname;
+			this.id = (json == null) ? null : json.id;
+			this.name = (json == null) ? null : json.nickname;
 		}
 		self.r.prototype = {
 			getId: function() {
@@ -646,12 +658,12 @@ function() {
 				getUrl: function(){
 					return this.url;
 				},
-				toSource: function() {
-					return {
-						type: r.MessageTypeConst.IMAGE,
-						imageId: this.imageId,
-						url: this.url
-					};m
+				toSource: function () {
+					var rt = { type: r.MessageTypeConst.IMAGE };
+					if(this.imageId) rt.imageId = this.imageId;
+					if(this.url) rt.url = this.url;
+					if(this.path) rt.path = this.path;
+					return rt;
 				},
 			}
 			return self.r;
@@ -671,11 +683,11 @@ function() {
 					return this.url;
 				},
 				toSource: function() {
-					return {
-						type: r.MessageTypeConst.FLASHIMAGE,
-						imageId: this.imageId,
-						url: this.url
-					};m
+					var rt = { type: r.MessageTypeConst.FLASHIMAGE };
+					if(this.imageId) rt.imageId = this.imageId;
+					if(this.url) rt.url = this.url;
+					if(this.path) rt.path = this.path;
+					return rt;
 				},
 			}
 			return self.r;
