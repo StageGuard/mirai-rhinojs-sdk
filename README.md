@@ -61,6 +61,18 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.12 → 1.5_alpha
+
+* 添加`Session.sendTempMessage`以支持发送临时消息。
+* 发送好友消息支持引用。
+* 添加`Session.get(Friend/Group/GroupMember)List`以支持获取好友/群/群成员列表。
+* 添加`Session.(un)mute(All)`以支持(全体)(解除)禁言。
+* 添加`Session.kick`以支持踢出群成员。
+* HTTP Post/Get 内置，不再需要NetworkUtils模块。
+* 修复了bug和一些逻辑问题。
+
+文档已更新，新用法浏览[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)。
+
 ### 2020.04.07 → 1.4.1_alpha
 
 * 为`Mirai.GroupInfo`的构造函数添加null判断

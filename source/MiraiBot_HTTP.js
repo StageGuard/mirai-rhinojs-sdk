@@ -17,9 +17,6 @@
 */
 
 function() {
-	if (__g_modules.indexOf("NetworkUtils") == -1) {
-		throw "Couldn't find module \"NetworkUtils\" in module list.";
-	}
 	var r = function(server, authKey, qqnum) {
 		this.server = server;
 		this.auth = authKey;
@@ -27,7 +24,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.4.1_alpha";
+	r.__version = "v1.5_alpha";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -53,7 +50,7 @@ function() {
 		}
 	}
 	r.auth = function(server, key) {
-		return JSON.parse(NetworkUtils.post(server + "auth", JSON.stringify({
+		return JSON.parse(r.NetworkUtils.post(server + "auth", JSON.stringify({
 			authKey: key
 		})));
 	}
@@ -129,7 +126,7 @@ function() {
 				run: function() {
 					try {
 						while (!java.lang.Thread.interrupted()) {
-							var p = NetworkUtils.post(server + "verify", JSON.stringify({
+							var p = r.NetworkUtils.post(server + "verify", JSON.stringify({
 								sessionKey: sessionid,
 								qq: qqnum
 							}));
@@ -190,15 +187,22 @@ function() {
 				run: function() {
 					try {
 						while (!java.lang.Thread.interrupted()) {
-							var p = JSON.parse(NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize));
-							if(p.code != 0) {
+							var p = JSON.parse(r.NetworkUtils.get(server + "fetchMessage?sessionKey=" + sessionid + "&count=" + hooksize));
+							if (p.code != 0) {
 								listener.listenerobj.hookError(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg));
-							} else if(p.data.length != 0){
-								p = p.data[0];
-								switch (p.type) {
-									case "GroupMessage": listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
-									case "FriendMessage": listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.sender), r.MessageChain._build(p.messageChain)); break;
-									default: listener.listenerobj.hookEvent(new r.EventType[p.type](p)); break;
+							} else if (p.data.length != 0) {
+								for(var i in p.data) {
+									switch (p.data[i].type) {
+										case "GroupMessage":
+											listener.listenerobj.hookGroupMessage(new r.GroupSenderInfo(p.data[i].sender), r.MessageChain._build(p.data[i].messageChain));
+										break;
+										case "FriendMessage":
+											listener.listenerobj.hookFriendMessage(new r.FriendSenderInfo(p.data[i].sender), r.MessageChain._build(p.data[i].messageChain));
+										break;
+										default:
+											listener.listenerobj.hookEvent(new r.EventType[p.data[i].type](p.data[i]));
+										break;
+									}
 								}
 							}
 							java.lang.Thread.sleep(interval);
@@ -222,7 +226,7 @@ function() {
 		},
 
 		release: function() {
-			var p = NetworkUtils.post(server + "release", JSON.stringify({
+			var p = r.NetworkUtils.post(server + "release", JSON.stringify({
 				sessionKey: this.sessionid,
 				qq: this.qqnum
 			}));
@@ -240,43 +244,64 @@ function() {
 				var params = {
 					sessionKey: this.sessionid,
 					target: Number(target),
-					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.toSource() : [messageChain.toSource()]
+					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.discordMessage(r.MessageTypeConst.QUOTE).toSource() : [messageChain.toSource()]
 				};
 				if (quoteId != null) params.quote = Number(quoteId);
-				var p = NetworkUtils.post(server + "sendGroupMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
-				if(p.length == 0) p = "{}";
+				var p = r.NetworkUtils.post(server + "sendGroupMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					r.Log.v("Message have sent(group=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.v("Message have sent(groupId=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
-					r.Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					r.Log.e("Error while sending group message. (groupId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
 					return 0;
 				}
 			} catch(e) {
-				r.Log.e("Error while sending group message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				r.Log.e("Error while sending group message. (groupId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + e);
 				return 0;
 			}
 		},
-		sendFriendMessage: function(target, messageChain) {
+		sendFriendMessage: function(target, messageChain, quoteId) {
 			try {
 				var params = {
 					sessionKey: this.sessionid,
 					target: Number(target),
-					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.toSource() : [messageChain.toSource()]
+					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.discordMessage(r.MessageTypeConst.QUOTE).toSource() : [messageChain.toSource()]
 				};
-				var p = NetworkUtils.post(server + "sendFriendMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
-				if(p.length == 0) p = "{}";
+				if (quoteId != null) params.quote = Number(quoteId);
+				var p = r.NetworkUtils.post(server + "sendFriendMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					r.Log.v("Message have sent(friend=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.v("Message have sent(friendId=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
-					r.Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + result.msg);
+					r.Log.e("Error while sending friend message. (friendId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
 					return 0;
 				}
 			} catch(e) {
-				r.Log.e("Error while sending friend message. Target=" + target + ", MessageChain=" + messageChain + "\n" + e);
+				r.Log.e("Error while sending friend message. (friendId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + e);
+				return 0;
+			}
+		},
+		sendTempMessage: function(target, from, messageChain, quoteId) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: r.mixDec(from, target),
+					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.discordMessage(r.MessageTypeConst.QUOTE).toSource() : [messageChain.toSource()]
+				};
+				if (quoteId != null) params.quote = Number(quoteId);
+				var p = r.NetworkUtils.post(server + "sendTempMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Message have sent(target=" + target + ", messageId=" + result.messageId + ")");
+					return result.messageId;
+				} else {
+					r.Log.e("Error while sending temp message. (target=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
+					return 0;
+				}
+			} catch(e) {
+				r.Log.e("Error while sending temp message. (target=" + target + ", messageChain=" + messageChain.toString() + ")\n" + e);
 				return 0;
 			}
 		},
@@ -286,24 +311,23 @@ function() {
 					sessionKey: this.sessionid,
 					target: Number(target)
 				};
-				var p = NetworkUtils.post(server + "recall", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
-				if(p.length == 0) p = "{}";
+				var p = r.NetworkUtils.post(server + "recall", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
 				var result = JSON.parse(p);
 				if (result.code == 0) {
 					r.Log.v("Message have recalled(messageId=" + target + ")");
 					return target;
 				} else {
-					r.Log.e("Error while recalling a message. MessageId=" + target + "\n" + result.msg);
+					r.Log.e("Error while recalling a message. (messageId=" + target + ")\n" + result.msg);
 					return 0;
 				}
 			} catch(e) {
-				r.Log.e("Error while recalling a message. MessageId=" + target + "\n" + e);
+				r.Log.e("Error while recalling a message. (messageId=" + target + ")\n" + e);
 				return 0;
 			}
 		},
 		getCachedMessage: function(messageId) {
 			try {
-				var p = NetworkUtils.get(server + "messageFromId?sessionKey=" + this.sessionid + "&id=" + messageId);
+				var p = r.NetworkUtils.get(server + "messageFromId?sessionKey=" + this.sessionid + "&id=" + messageId);
 				var result = JSON.parse(p);
 				if (result.code == 5) {
 					r.Log.e("Message is not cached or messageid is invaild. " + result.msg + "(messageId=" + messageId + ")");
@@ -312,21 +336,153 @@ function() {
 					return r.MessageChain._build(result.messageChain);
 				}
 			} catch(e) {
-				r.Log.e("Error while fetching a cached message. MessageId=" + messageId + "\n" + e);
+				r.Log.e("Error while fetching a cached message.(messageId=" + messageId + ")\n" + e);
 				return new r.MessageChain();
 			}
-		}
+		},
+		getFriendList: function() {
+			try {
+				var p = r.NetworkUtils.get(server + "friendList?sessionKey=" + this.sessionid);
+				if(p.substr(0, 1) != "[") {
+					r.Log.e("Error while fetching friend list: " + JSON.parse(p).msg);
+				} else {
+					return eval("(" + p + ")");
+				}
+			} catch(e) {
+				r.Log.e("Error while fetching friend list: " + e);
+				return [];
+			}
+		},
+		getGroupList: function() {
+			try {
+				var p = r.NetworkUtils.get(server + "groupList?sessionKey=" + this.sessionid);
+				if(p.substr(0, 1) != "[") {
+					r.Log.e("Error while fetching group list: " + JSON.parse(p).msg);
+				} else {
+					return eval("(" + p + ")");
+				}
+			} catch(e) {
+				r.Log.e("Error while fetching group list: " + e);
+				return [];
+			}
+		},
+		getGroupMemberList: function(id) {
+			try {
+				var p = r.NetworkUtils.get(server + "memberList?sessionKey=" + this.sessionid + "&target=" + id);
+				if(p.substr(0, 1) != "[") {
+					r.Log.e("Error while fetching group member list(groupId=" + id + "): " + JSON.parse(p).msg);
+				} else {
+					return eval("(" + p + ")");
+				}
+			} catch(e) {
+				r.Log.e("Error while fetching group member list: " + e);
+				return [];
+			}
+		},
+		mute: function(group, target, time) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(group),
+					memberId: Number(target),
+					time: Number(Math.min(Math.max(0, time), 2591999))
+				};
+				var p = r.NetworkUtils.post(server + "mute", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Group mute member(groupId=" + group + ", target=" + target + ", time=" + time + "s)");
+				} else {
+					r.Log.e("Error while calling mute group member(groupId=" + group + ", target=" + target + ", time=" + time + "s)\n" + result.msg);
+				}
+			} catch(e) {
+				r.Log.e("Error while calling mute group member(groupId=" + group + ", target=" + target + ", time=" + time + "s)\n" + e);
+			}
+		},
+		unmute: function(group, target) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(group),
+					memberId: Number(target)
+				};
+				var p = r.NetworkUtils.post(server + "unmute", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Group unmute member(groupId=" + group + ", target=" + target + ")");
+				} else {
+					r.Log.e("Error while calling unmute group member(groupId=" + group + ", target=" + target + ")\n" + result.msg);
+				}
+			} catch(e) {
+				r.Log.e("Error while calling unmute group member(groupId=" + group + ", target=" + target + ")\n" + e);
+			}
+		},
+		muteAll: function(target) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(group),
+					memberId: Number(target)
+				};
+				var p = r.NetworkUtils.post(server + "muteAll", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Group mute all(groupId=" + target + ")");
+				} else {
+					r.Log.e("Error while calling mute group all(groupId)=" + target + ")\n" + result.msg);
+				}
+			} catch(e) {
+				r.Log.e("Error while calling mute group all(groupId=" + target + ")\n" + e);
+			}
+		},
+		unmuteAll: function(target) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(target)
+				};
+				var p = r.NetworkUtils.post(server + "unmuteAll", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Group unmute all(groupId=" + target + ")");
+				} else {
+					r.Log.e("Error while calling unmute group all(groupId)=" + target + ")\n" + result.msg);
+				}
+			} catch(e) {
+				r.Log.e("Error while calling unmute group all(groupId=" + target + ")\n" + e);
+			}
+		},
+		kick: function(group, target, msg) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					target: Number(group),
+					memberId: Number(target),
+					msg: msg == null ? "您已被移除群聊" : String(msg)
+				};
+				var p = r.NetworkUtils.post(server + "kick", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v("Group kick member(groupId=" + group + ", target=" + target + ")");
+				} else {
+					r.Log.e("Error while calling kicl group member(groupId=" + group + ", target=" + target + ")\n" + result.msg);
+					return 0;
+				}
+			} catch(e) {
+				r.Log.e("Error while calling kick group member(groupId=" + group + ", target=" + target + ")\n" + e);
+				return 0;
+			}
+		},
 	}
 	r.MessageListener = function(hooks) {
 		this.listenerobj = hooks;
 	};
-	
-	r.GroupSenderInfo = (function self(){
+
+	r.GroupSenderInfo = (function self() {
 		self.r = function(json) {
-			this.id = (json == null) ? null : json.id;
-			this.name = (json == null) ? null : json.memberName;
-			this.permission = (json == null) ? null : json.permission;
-			this.group = (json == null) ? null : new r.GroupInfo(json.group);
+			this.id = (json == null) ? null: json.id;
+			this.name = (json == null) ? null: json.memberName;
+			this.permission = (json == null) ? null: json.permission;
+			this.group = (json == null) ? null: new r.GroupInfo(json.group);
 		}
 		self.r.prototype = {
 			getId: function() {
@@ -351,11 +507,11 @@ function() {
 			}
 		}
 		return self.r;
-	}());
-	r.FriendSenderInfo = (function self(){
+	} ());
+	r.FriendSenderInfo = (function self() {
 		self.r = function(json) {
-			this.id = (json == null) ? null : json.id;
-			this.name = (json == null) ? null : json.nickname;
+			this.id = (json == null) ? null: json.id;
+			this.name = (json == null) ? null: json.nickname;
 		}
 		self.r.prototype = {
 			getId: function() {
@@ -372,12 +528,12 @@ function() {
 			}
 		}
 		return self.r;
-	}());
-	r.GroupInfo = (function self(){
-		self.r = function(group) {
-			this.id = group.id;
-			this.name = group.name;
-			this.permission = group.permission;
+	} ());
+	r.GroupInfo = (function self() {
+		self.r = function(json) {
+			this.id = (json == null) ? null: json.id;
+			this.name = (json == null) ? null: json.memberName;
+			this.permission = (json == null) ? null: json.permission;
 		}
 		self.r.prototype = {
 			getId: function() {
@@ -398,41 +554,65 @@ function() {
 			}
 		}
 		return self.r;
-	}());
+	} ());
 	r.GroupInfo.Permission = {
 		OWNER: "OWNER",
 		ADMIN: "ADMINISTRATOR",
 		MEMBER: "MEMBER",
 	}
 	r.MessageChain = function(messageChain) {
-		this.msg = messageChain ? messageChain : [];
+		this.msg = messageChain ? messageChain: [];
 	}
 	r.MessageChain._build = function(msg) {
 		var chains = [];
-		for(var i in msg) {
+		for (var i in msg) {
 			switch (msg[i].type) {
-				case r.MessageTypeConst.SOURCE: chains.push(new r.MessageType.Source(msg[i].id, msg[i].time)); break;
-				case r.MessageTypeConst.QUOTE: chains.push(new r.MessageType.Quote(msg[i].id, msg[i].senderId, msg[i].groupId, r.MessageChain._build(msg[i].origin))); break;
-				case r.MessageTypeConst.AT: chains.push(new r.MessageType.At(msg[i].target, msg[i].display)); break;
-				case r.MessageTypeConst.ATALL: chains.push(new r.MessageType.AtAll()); break;
-				case r.MessageTypeConst.PLAIN: chains.push(new r.MessageType.Plain(msg[i].text)); break;
-				case r.MessageTypeConst.FACE: chains.push(new r.MessageType.Face(msg[i].faceId, msg[i].name)); break;
-				case r.MessageTypeConst.IMAGE: chains.push(new r.MessageType.Image(msg[i].imageId, msg[i].url)); break;
-				case r.MessageTypeConst.FLASHIMAGE: chains.push(new r.MessageType.FlashImage(msg[i].imageId, msg[i].url)); break;
-				case r.MessageTypeConst.XML: chains.push(new r.MessageType.Xml(msg[i].xml)); break;
-				case r.MessageTypeConst.JSON: chains.push(new r.MessageType.Json(msg[i].json)); break;
-				case r.MessageTypeConst.APP: chains.push(new r.MessageType.App(msg[i].content)); break;
-				case r.MessageTypeConst.POKE: chains.push(new r.MessageType.Poke(msg[i].name)); break;
-				
+			case r.MessageTypeConst.SOURCE:
+				chains.push(new r.MessageType.Source(msg[i].id, msg[i].time));
+				break;
+			case r.MessageTypeConst.QUOTE:
+				chains.push(new r.MessageType.Quote(msg[i].id, msg[i].senderId, msg[i].groupId, r.MessageChain._build(msg[i].origin)));
+				break;
+			case r.MessageTypeConst.AT:
+				chains.push(new r.MessageType.At(msg[i].target, msg[i].display));
+				break;
+			case r.MessageTypeConst.ATALL:
+				chains.push(new r.MessageType.AtAll());
+				break;
+			case r.MessageTypeConst.PLAIN:
+				chains.push(new r.MessageType.Plain(msg[i].text));
+				break;
+			case r.MessageTypeConst.FACE:
+				chains.push(new r.MessageType.Face(msg[i].faceId, msg[i].name));
+				break;
+			case r.MessageTypeConst.IMAGE:
+				chains.push(new r.MessageType.Image(msg[i].imageId, msg[i].url));
+				break;
+			case r.MessageTypeConst.FLASHIMAGE:
+				chains.push(new r.MessageType.FlashImage(msg[i].imageId, msg[i].url));
+				break;
+			case r.MessageTypeConst.XML:
+				chains.push(new r.MessageType.Xml(msg[i].xml));
+				break;
+			case r.MessageTypeConst.JSON:
+				chains.push(new r.MessageType.Json(msg[i].json));
+				break;
+			case r.MessageTypeConst.APP:
+				chains.push(new r.MessageType.App(msg[i].content));
+				break;
+			case r.MessageTypeConst.POKE:
+				chains.push(new r.MessageType.Poke(msg[i].name));
+				break;
+
 			}
 		}
 		return new r.MessageChain(chains);
 	};
 	r.MessageChain.build = function self() {
 		self.chain = [];
-		for(var i in arguments) {
-			if(arguments[i] instanceof r.MessageChain) {
-				for(var i in self.ca = arguments[i].toChainArray()) {
+		for (var i in arguments) {
+			if (arguments[i] instanceof r.MessageChain) {
+				for (var i in self.ca = arguments[i].toChainArray()) {
 					self.chain.push(self.ca[i]);
 				}
 			} else {
@@ -446,25 +626,25 @@ function() {
 			return this.msg.length;
 		},
 		getMessage: function(type) {
-			for(var i in this.msg) {
-				if(this.msg[i].type == type) {
+			for (var i in this.msg) {
+				if (this.msg[i].type == type) {
 					return this.msg[i];
 				}
 			}
 			return new r.MessageType[type]();
 		},
 		discordMessage: function(type) {
-			for(var i in this.msg) {
-				if(this.msg[i].type == type) {
+			for (var i in this.msg) {
+				if (this.msg[i].type == type) {
 					this.msg.splice(i, 1);
 				}
 			}
 			return this;
 		},
 		addMessage: function self() {
-			for(var i in arguments) {
-				if(arguments[i] instanceof r.MessageChain) {
-					for(var i in self.ca = arguments[i].toChainArray()) {
+			for (var i in arguments) {
+				if (arguments[i] instanceof r.MessageChain) {
+					for (var i in self.ca = arguments[i].toChainArray()) {
 						this.msg.push(self.ca[i]);
 					}
 				} else {
@@ -474,9 +654,9 @@ function() {
 			return this;
 		},
 		addMessageF: function self() {
-			for(var i in arguments) {
-				if(arguments[i] instanceof r.MessageChain) {
-					for(var i in self.ca = arguments[i].toChainArray()) {
+			for (var i in arguments) {
+				if (arguments[i] instanceof r.MessageChain) {
+					for (var i in self.ca = arguments[i].toChainArray()) {
 						this.msg.unshift(self.ca[i]);
 					}
 				} else {
@@ -487,7 +667,7 @@ function() {
 		},
 		toSource: function self() {
 			self.chain = [];
-			for(var i in this.msg) {
+			for (var i in this.msg) {
 				self.chain.push(this.msg[i].toSource());
 			}
 			return self.chain;
@@ -497,14 +677,28 @@ function() {
 		},
 		toString: function self() {
 			self.chain = [];
-			for(var i in this.msg) {
+			for (var i in this.msg) {
 				self.chain.push(JSON.stringify(this.msg[i].toSource()));
 			}
 			return self.chain;
 		},
-		
+
 	};
-	r.MessageTypeConst = {SOURCE:"Source", QUOTE: "Quote", AT: "At", ATALL: "AtAll", FACE: "Face", PLAIN: "Plain", IMAGE: "Image", FLASHIMAGE: "FlashImage", XML: "Xml", JSON: "Json", APP: "App", POKE: "Poke", PokeType: {}};
+	r.MessageTypeConst = {
+		SOURCE: "Source",
+		QUOTE: "Quote",
+		AT: "At",
+		ATALL: "AtAll",
+		FACE: "Face",
+		PLAIN: "Plain",
+		IMAGE: "Image",
+		FLASHIMAGE: "FlashImage",
+		XML: "Xml",
+		JSON: "Json",
+		APP: "App",
+		POKE: "Poke",
+		PokeType: {}
+	};
 	r.MessageTypeConst.PokeType = {
 		POKE: "Poke",
 		SHOWLOVE: "ShowLove",
@@ -514,17 +708,17 @@ function() {
 		FANGDAZHAO: "FangDaZhao"
 	};
 	r.MessageType = {
-		Source: (function self(){
+		Source: (function self() {
 			self.r = function(id, time) {
-				this.id = id ? id : null;
-				this.time = time ? time : null;
+				this.id = id ? id: null;
+				this.time = time ? time: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.SOURCE,
-				getId: function(){
+				getId: function() {
 					return this.id;
 				},
-				getTime: function(){
+				getTime: function() {
 					return this.time;
 				},
 				toSource: function() {
@@ -536,13 +730,13 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		Quote: (function self(){
+		} ()),
+		Quote: (function self() {
 			self.r = function(id, senderId, groupId, origin) {
-				this.id = id ? id : null;
-				this.groupId = groupId ? groupId : null;
-				this.senderId = senderId ? senderId : null;
-				this.origin = origin ? origin : null;
+				this.id = id ? id: null;
+				this.groupId = groupId ? groupId: null;
+				this.senderId = senderId ? senderId: null;
+				this.origin = origin ? origin: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.QUOTE,
@@ -568,11 +762,11 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		At: (function self(){
+		} ()),
+		At: (function self() {
 			self.r = function(target, display) {
-				this.target = target ? target : null;
-				this.display = display ? display : null;
+				this.target = target ? target: null;
+				this.display = display ? display: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.AT,
@@ -591,21 +785,23 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		AtAll: (function self(){
+		} ()),
+		AtAll: (function self() {
 			self.r = function() {}
 			self.r.prototype = {
 				type: r.MessageTypeConst.ATALL,
 				toSource: function() {
-					return {type: r.MessageTypeConst.ATALL};
+					return {
+						type: r.MessageTypeConst.ATALL
+					};
 				},
 			}
 			return self.r;
-		}()),
-		Face: (function self(){
+		} ()),
+		Face: (function self() {
 			self.r = function(faceId, name) {
-				this.faceId = faceId ? faceId : null;
-				this.name = name ? name : null;
+				this.faceId = faceId ? faceId: null;
+				this.name = name ? name: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.FACE,
@@ -613,26 +809,26 @@ function() {
 					return this.faceId;
 				},
 				getName: function() {
-					return this.name ? this.name : null;
+					return this.name ? this.name: null;
 				},
 				toSource: function() {
 					var s = {
 						type: r.MessageTypeConst.FACE,
 						faceId: this.faceId,
 					}
-					if(this.name) s.name = this.name;
+					if (this.name) s.name = this.name;
 					return s;
 				},
 			}
 			return self.r;
-		}()),
-		Plain: (function self(){
+		} ()),
+		Plain: (function self() {
 			self.r = function(text) {
 				this.text = text ? String(text) : null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.PLAIN,
-				getText: function(){
+				getText: function() {
 					return this.text;
 				},
 				toSource: function() {
@@ -643,58 +839,62 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		Image: (function self(){
+		} ()),
+		Image: (function self() {
 			self.r = function(imageId, url, path) {
-				this.imageId = imageId ? imageId : null;
-				this.url = url ? url : null;
-				this.path = path ? path : null;
+				this.imageId = imageId ? imageId: null;
+				this.url = url ? url: null;
+				this.path = path ? path: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.IMAGE,
-				getImageId: function(){
+				getImageId: function() {
 					return this.imageId;
 				},
-				getUrl: function(){
-					return this.url;
-				},
-				toSource: function () {
-					var rt = { type: r.MessageTypeConst.IMAGE };
-					if(this.imageId) rt.imageId = this.imageId;
-					if(this.url) rt.url = this.url;
-					if(this.path) rt.path = this.path;
-					return rt;
-				},
-			}
-			return self.r;
-		}()),
-		FlashImage: (function self(){
-			self.r = function(imageId, url, path) {
-				this.imageId = imageId ? imageId : null;
-				this.url = url ? url : null;
-				this.path = path ? path : null;
-			}
-			self.r.prototype = {
-				type: r.MessageTypeConst.FLASHIMAGE,
-				getImageId: function(){
-					return this.imageId;
-				},
-				getUrl: function(){
+				getUrl: function() {
 					return this.url;
 				},
 				toSource: function() {
-					var rt = { type: r.MessageTypeConst.FLASHIMAGE };
-					if(this.imageId) rt.imageId = this.imageId;
-					if(this.url) rt.url = this.url;
-					if(this.path) rt.path = this.path;
+					var rt = {
+						type: r.MessageTypeConst.IMAGE
+					};
+					if (this.imageId) rt.imageId = this.imageId;
+					if (this.url) rt.url = this.url;
+					if (this.path) rt.path = this.path;
 					return rt;
 				},
 			}
 			return self.r;
-		}()),
-		Xml: (function self(){
+		} ()),
+		FlashImage: (function self() {
+			self.r = function(imageId, url, path) {
+				this.imageId = imageId ? imageId: null;
+				this.url = url ? url: null;
+				this.path = path ? path: null;
+			}
+			self.r.prototype = {
+				type: r.MessageTypeConst.FLASHIMAGE,
+				getImageId: function() {
+					return this.imageId;
+				},
+				getUrl: function() {
+					return this.url;
+				},
+				toSource: function() {
+					var rt = {
+						type: r.MessageTypeConst.FLASHIMAGE
+					};
+					if (this.imageId) rt.imageId = this.imageId;
+					if (this.url) rt.url = this.url;
+					if (this.path) rt.path = this.path;
+					return rt;
+				},
+			}
+			return self.r;
+		} ()),
+		Xml: (function self() {
 			self.r = function(xml) {
-				this.xml = xml ? xml : null;
+				this.xml = xml ? xml: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.XML,
@@ -709,10 +909,10 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		Json: (function self(){
+		} ()),
+		Json: (function self() {
 			self.r = function(json) {
-				this.json = json ? json : null;
+				this.json = json ? json: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.JSON,
@@ -727,10 +927,10 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		App: (function self(){
+		} ()),
+		App: (function self() {
 			self.r = function(app) {
-				this.app = app ? app : null;
+				this.app = app ? app: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.APP,
@@ -745,10 +945,10 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		Poke: (function self(){
+		} ()),
+		Poke: (function self() {
 			self.r = function(name) {
-				this.name = name ? name : null;
+				this.name = name ? name: null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.POKE,
@@ -763,7 +963,7 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
+		} ()),
 	},
 	r.EventTypeConst = {
 		BOT_ONLINE: "BotOnlineEvent",
@@ -793,7 +993,7 @@ function() {
 		GROUP_MEMBER_UNMUTE: "MemberUnmuteEvent"
 	},
 	r.EventType = {
-		BotOnlineEvent: (function self(){
+		BotOnlineEvent: (function self() {
 			self.r = function(json) {
 				this.id = json.qq;
 			}
@@ -804,8 +1004,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		BotOfflineEvent: (function self(){
+		} ()),
+		BotOfflineEvent: (function self() {
 			self.r = function(json) {
 				this.id = json.qq;
 			}
@@ -816,8 +1016,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		BotOfflineEventForce: (function self(){
+		} ()),
+		BotOfflineEventForce: (function self() {
 			self.r = function(json) {
 				this.id = json.qq;
 			}
@@ -828,8 +1028,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		BotOfflineEventDropped: (function self(){
+		} ()),
+		BotOfflineEventDropped: (function self() {
 			self.r = function(json) {
 				this.id = json.qq;
 			}
@@ -840,8 +1040,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		BotReloginEvent: (function self(){
+		} ()),
+		BotReloginEvent: (function self() {
 			self.r = function(json) {
 				this.id = json.qq;
 			}
@@ -852,8 +1052,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		GroupRecallEvent: (function self(){
+		} ()),
+		GroupRecallEvent: (function self() {
 			self.r = function(json) {
 				this.senderId = json.authorId;
 				this.messageId = json.messageId;
@@ -880,8 +1080,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		FriendRecallEvent: (function self(){
+		} ()),
+		FriendRecallEvent: (function self() {
 			self.r = function(json) {
 				this.senderId = json.authorId;
 				this.messageId = json.messageId;
@@ -900,8 +1100,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		BotGroupPermissionChangeEvent: (function self(){
+		} ()),
+		BotGroupPermissionChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -920,8 +1120,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		BotMuteEvent: (function self(){
+		} ()),
+		BotMuteEvent: (function self() {
 			self.r = function(json) {
 				this.duration = json.durationSeconds;
 				this.operator = new r.GroupSenderInfo(json.operator);
@@ -936,8 +1136,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		BotUnmuteEvent: (function self(){
+		} ()),
+		BotUnmuteEvent: (function self() {
 			self.r = function(json) {
 				this.operator = new r.GroupSenderInfo(json.operator);
 			}
@@ -948,8 +1148,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		BotJoinGroupEvent: (function self(){
+		} ()),
+		BotJoinGroupEvent: (function self() {
 			self.r = function(json) {
 				this.group = new r.GroupInfo(json.group);
 			}
@@ -960,8 +1160,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		GroupNameChangeEvent: (function self(){
+		} ()),
+		GroupNameChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -984,8 +1184,8 @@ function() {
 				}
 			}
 			return self.r;
-		}()),
-		GroupEntranceAnnouncementChangeEvent: (function self(){
+		} ()),
+		GroupEntranceAnnouncementChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -1008,8 +1208,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		GroupMuteAllEvent: (function self(){
+		} ()),
+		GroupMuteAllEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -1032,8 +1232,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberJoinEvent: (function self(){
+		} ()),
+		MemberJoinEvent: (function self() {
 			self.r = function(json) {
 				this.member = new r.GroupSenderInfo(json.member);
 			}
@@ -1044,8 +1244,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberLeaveEventKick: (function self(){
+		} ()),
+		MemberLeaveEventKick: (function self() {
 			self.r = function(json) {
 				this.member = new r.GroupSenderInfo(json.member);
 				this.operator = new r.GroupSenderInfo(json.operator);
@@ -1060,8 +1260,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberLeaveEventQuit: (function self(){
+		} ()),
+		MemberLeaveEventQuit: (function self() {
 			self.r = function(json) {
 				this.member = new r.GroupSenderInfo(json.member);
 			}
@@ -1072,8 +1272,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberCardChangeEvent: (function self(){
+		} ()),
+		MemberCardChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -1096,8 +1296,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberSpecialTitleChangeEvent: (function self(){
+		} ()),
+		MemberSpecialTitleChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -1116,8 +1316,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberPermissionChangeEvent: (function self(){
+		} ()),
+		MemberPermissionChangeEvent: (function self() {
 			self.r = function(json) {
 				this.before = json.origin;
 				this.after = json.current;
@@ -1136,8 +1336,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberMuteEvent: (function self(){
+		} ()),
+		MemberMuteEvent: (function self() {
 			self.r = function(json) {
 				this.duration = json.durationSeconds;
 				this.member = new r.GroupSenderInfo(json.member);
@@ -1156,8 +1356,8 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
-		MemberUnmuteEvent: (function self(){
+		} ()),
+		MemberUnmuteEvent: (function self() {
 			self.r = function(json) {
 				this.member = new r.GroupSenderInfo(json.member);
 				this.operator = new r.GroupSenderInfo(json.operator);
@@ -1172,25 +1372,70 @@ function() {
 				},
 			}
 			return self.r;
-		}()),
+		} ()),
 		//匿名，坦白说和允许群组成员邀请事件没啥用，就不写了
 		//放在这的原因是防止hookEvent时出现找不到对象的错误。
-		GroupAllowAnonymousChatEvent: function(){},
-		GroupAllowConfessTalkEvent: function(){},
-		GroupAllowMemberInviteEvent: function(){},
-	},
+		GroupAllowAnonymousChatEvent: function() {},
+		GroupAllowConfessTalkEvent: function() {},
+		GroupAllowMemberInviteEvent: function() {},
+	};
+	r.mixDec = function(num1, num2) {
+		var bin1 = Number(num1).toString(2);
+		var bin2 = Number(num2).toString(2);
+		if(bin1.length < 32) {
+			for(var i = bin1.length; i < 32; i++) {
+				bin1 = "0" + bin1;
+			}
+		}
+		if(bin2.length < 32) {
+			for(var i = bin2.length; i < 32; i++) {
+				bin2 = "0" + bin2;
+			}
+		}
+		return r.binl2dc(bin1 + bin2);
+	}
+	r.binl2dc = function(b) {
+		var toBaseOut = function(str, baseIn, baseOut, alphabet) {
+			var j, arr = [0],
+			arrL,
+			i = 0,
+			len = str.length;
+			for (; i < len;) {
+				for (arrL = arr.length; arrL--; arr[arrL] *= baseIn);
+				arr[0] += alphabet.indexOf(str.charAt(i++));
+				for (j = 0; j < arr.length; j++) {
+					if (arr[j] > baseOut - 1) {
+						if (arr[j + 1] == null) arr[j + 1] = 0;
+						arr[j + 1] += arr[j] / baseOut | 0;
+						arr[j] %= baseOut;
+					}
+				}
+			}
+			return arr.reverse();
+		}
+		var convertBase = function(str, baseIn, baseOut, sign, callerIsToString) {
+			var xc = toBaseOut(str, baseIn, baseOut, callerIsToString ? (alphabet = "0123456789abcdefghijklmnopqrstuvwxyz", "0123456789") : (alphabet = "0123456789", "0123456789abcdefghijklmnopqrstuvwxyz"));
+			var result = "";
+			for(var i in xc) result += xc[i];
+			return result;
+		};
+		var str = String(b);
+		var s = str.charCodeAt(0) === 45 ? (str = str.slice(1), -1) : 1;
+		str = convertBase(str, 2, 10, s);
+		return str;
+	}
 	r.Log = {
 		i: function(msg) {
 			java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][INFO] " + String(msg));
 		},
 		w: function(msg) {
-			java.lang.System.out.println("\u001B[33m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][WARNING] " + String(msg) + "\u001B[0m");
+			java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][\u001B[33mWARNING\u001B[0m] " + String(msg));
 		},
 		v: function(msg) {
-			java.lang.System.out.println("\u001B[32m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][V] " + String(msg) + "\u001B[0m");
+			java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][\u001B[32mVERBOSE\u001B[0m] " + String(msg));
 		},
 		e: function(msg) {
-			java.lang.System.out.println("\u001B[31m[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][ERROR] " + (function() {
+			java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime() + 28800000) + "][\u001B[31mERROR\u001B[0m] " + (function() {
 				if (msg instanceof Error) {
 					return "Error: " + msg.toString() + "(" + msg.lineNumber + ")";
 				} else {
@@ -1199,13 +1444,87 @@ function() {
 			} ()) + "\u001B[0m");
 		},
 	}
+	r.NetworkUtils = {
+		getInputStream: function(url, headers) {
+			try {
+				var urlConnect = new java.net.URL(url);
+				var connection = urlConnect.openConnection();
+				if (headers != null) {
+					for (var i in headers) {
+						connection.setRequestProperty(headers[i][0], headers[i][1]);
+					}
+				}
+				connection.setDoInput(true);
+				connection.connect();
+				return [connection.getContentLength(), connection.getInputStream()];
+			} catch(e) {
+				throw e;
+				return "";
+			}
+		},
+		post: function(url, param, headers) {
+			//Log.i("POST: " + url + "\nparams: " + _toSource(param));
+			var result = "";
+			var bufferedReader = null;
+			var printWriter = null;
+			try {
+				var urlConnect = new java.net.URL(url);
+				var connection = urlConnect.openConnection();
+				for (var i in headers) {
+					connection.setRequestProperty(headers[i][0], headers[i][1]);
+				}
+				connection.setConnectTimeout(12000);
+				connection.setDoOutput(true);
+				connection.setDoInput(true);
+				printWriter = new java.io.PrintWriter(connection.getOutputStream());
+				printWriter.print(param);
+				printWriter.flush();
+				bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
+				var line;
+				while ((line = bufferedReader.readLine()) != null) {
+					result += line;
+				}
+				if (bufferedReader != null) bufferedReader.close();
+				if (printWriter != null) printWriter.close();
+			} catch(error) {
+				if (bufferedReader != null) bufferedReader.close();
+				if (printWriter != null) printWriter.close();
+				throw error;
+			}
+			return result;
+		},
+		get: function(url, headers, isLineBreak) {
+			var result = "";
+			var bufferedReader = null;
+			try {
+				var urlConnect = new java.net.URL(url);
+				var connection = urlConnect.openConnection();
+				for (var i in headers) {
+					connection.setRequestProperty(headers[i][0], headers[i][1]);
+				}
+				connection.setConnectTimeout(12000);
+				connection.setDoInput(true);
+				bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
+				var line;
+				while ((line = bufferedReader.readLine()) != null) {
+					result += line;
+					if (isLineBreak) result += "\n";
+				}
+				if (bufferedReader != null) bufferedReader.close();
+			} catch(error) {
+				throw error;
+				if (bufferedReader != null) bufferedReader.close();
+			}
+			return result;
+		}
+	}
 	r.Log.w("* MiraiBot_HTTP.js版本： " + r.__version);
 	r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
 	r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
 	r.Log.w("* 因取消强制更新而导致MiraiBot_HTTP.js出现bug，恕不解决！");
 	r.Log.w("* 如果你的demo.js突然不能运行，请查看demo.js是否有更新");
-	r.Log.e("* 重要：demo.js更新解决运行30分钟后报Session不存在的问题，请浏览仓库demo.js查看解决方案");
 	r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
 	r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
+	
 	return r;
 } ()
