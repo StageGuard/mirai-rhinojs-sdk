@@ -24,7 +24,7 @@ function() {
 		this.sessions = [];
 	}
 	r.module = "Mirai";
-	r.__version = "v1.5_alpha";
+	r.__version = "v1.5.1";
 	r.prototype = {
 		setAuthKey: function(k) {
 			if (key && typeof(key) == "string") this.key = k;
@@ -287,7 +287,9 @@ function() {
 			try {
 				var params = {
 					sessionKey: this.sessionid,
-					target: r.mixDec(from, target),
+					//target: r.mixDec(from, target),
+					qq: target,
+					group: from,
 					messageChain: (messageChain instanceof r.MessageChain) ? messageChain.discordMessage(r.MessageTypeConst.QUOTE).toSource() : [messageChain.toSource()]
 				};
 				if (quoteId != null) params.quote = Number(quoteId);
@@ -469,6 +471,53 @@ function() {
 				}
 			} catch(e) {
 				r.Log.e("Error while calling kick group member(groupId=" + group + ", target=" + target + ")\n" + e);
+				return 0;
+			}
+		},
+		handleFriendRequest: function(iArg, isAccept, msg) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					eventId: iArg.eventId,
+					fromId: iArg.fromId,
+					groupId: iArg.groupId,
+					operate: isAccept,
+					message: (msg == null ? "" : msg)
+				}
+				var p = r.NetworkUtils.post(server + "/resp/newFriendRequestEvent", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v(((isAccept == 0) ? "Accepted" : "Rejected") + "a new friend request.(qq=" + iArg.fromId + ((iArg.groupId == 0) ? "" : (", from=" + iArg.groupId)) + ")");
+				} else {
+					r.Log.e("Error while handling new friend request(qq=" + iArg.fromId + ((iArg.groupId == 0) ? "" : (", from=" + iArg.groupId)) + ")\n" + result.msg);
+					return 0;
+				}
+			} catch(e) {
+				r.Log.e("Error while handling new friend request(qq=" + iArg.fromId + ((iArg.groupId == 0) ? "" : (", from=" + iArg.groupId)) + ")\n" + e);
+				return 0;
+			}
+		},
+		handleMemberJoinRequest: function(iArg, isAccept, msg) {
+			try {
+				var params = {
+					sessionKey: this.sessionid,
+					eventId: iArg.eventId,
+					fromId: iArg.fromId,
+					groupId: iArg.groupId,
+					operate: isAccept,
+					message: (msg == null ? "" : msg)
+				}
+				Log.v(JSON.stringify(params))
+				var p = r.NetworkUtils.post(server + "/resp/memberJoinRequestEvent", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
+				var result = JSON.parse(p);
+				if (result.code == 0) {
+					r.Log.v(((isAccept == 0) ? "Accepted" : "Rejected") + "a member join request.(qq=" + iArg.fromId + ", group=" + iArg.groupId + ")");
+				} else {
+					r.Log.e("Error while handling member join request(qq=" + iArg.fromId + ", group=" + iArg.groupId + ")\n" + result.msg);
+					return 0;
+				}
+			} catch(e) {
+				r.Log.e("Error while handling member join request(qq=" + iArg.fromId + ", group=" + iArg.groupId + ")\n" + e);
 				return 0;
 			}
 		},
@@ -990,7 +1039,9 @@ function() {
 		GROUP_MEMBER_FAME_CHANHE: "MemberSpecialTitleChangeEvent",
 		GROUP_MEMBER_PERMISSION_CHANGE: "MemberPermissionChangeEvent",
 		GROUP_MEMBER_MUTE: "MemberMuteEvent",
-		GROUP_MEMBER_UNMUTE: "MemberUnmuteEvent"
+		GROUP_MEMBER_UNMUTE: "MemberUnmuteEvent",
+		NEW_FRIEND_REQUEST: "NewFriendRequestEvent",
+		NEW_MEMBER_JOIN_REQUEST: "MemberJoinRequestEvent",
 	},
 	r.EventType = {
 		BotOnlineEvent: (function self() {
@@ -1378,6 +1429,72 @@ function() {
 		GroupAllowAnonymousChatEvent: function() {},
 		GroupAllowConfessTalkEvent: function() {},
 		GroupAllowMemberInviteEvent: function() {},
+		NewFriendRequestEvent:  (function self() {
+			self.r = function(json) {
+				this.eventId = json.eventId;
+				this.fromId = json.fromId;
+				this.groupId = json.groupId;
+				this.nickname = json.nick;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.NEW_FRIEND_REQUEST,
+				getEventId: function() {
+					return this.eventId;
+				},
+				getFromId: function() {
+					return this.fromId;
+				},
+				getGroupId: function() {
+					return this.groupId;
+				},
+				getNickname: function() {
+					return this.nickname;
+				},
+				toIArg: function() {
+					return {
+						eventId: this.eventId,
+						fromId: this.fromId,
+						groupId: this.groupId
+					}
+				}
+			}
+			return self.r;
+		} ()),
+		MemberJoinRequestEvent:  (function self() {
+			self.r = function(json) {
+				this.eventId = json.eventId;
+				this.fromId = json.fromId;
+				this.groupId = json.groupId;
+				this.groupName = json.groupName;
+				this.nickname = json.nick;
+			}
+			self.r.prototype = {
+				type: r.EventTypeConst.NEW_MEMBER_JOIN_REQUEST,
+				getEventId: function() {
+					return this.eventId;
+				},
+				getFromId: function() {
+					return this.fromId;
+				},
+				getGroupId: function() {
+					return this.groupId;
+				},
+				getGroupName: function() {
+					return this.groupName;
+				},
+				getNickname: function() {
+					return this.nickname;
+				},
+				toIArg: function() {
+					return {
+						eventId: this.eventId,
+						fromId: this.fromId,
+						groupId: this.groupId
+					}
+				}
+			}
+			return self.r;
+		} ()),
 	};
 	r.mixDec = function(num1, num2) {
 		var bin1 = Number(num1).toString(2);
@@ -1463,7 +1580,7 @@ function() {
 			}
 		},
 		post: function(url, param, headers) {
-			//Log.i("POST: " + url + "\nparams: " + _toSource(param));
+			//r.Log.i("POST: " + url + "\nparams: " + _toSource(param));
 			var result = "";
 			var bufferedReader = null;
 			var printWriter = null;

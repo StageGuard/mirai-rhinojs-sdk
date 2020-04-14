@@ -61,6 +61,15 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 
 ## 更新日志
 
+### 2020.04.14 → 1.5.1
+
+* `Session.sendTempMessage`适配http api 1.6.2版本。
+* 添加`EventType.NEW_FRIEND_REQUEST`和`EventType.NEW_MEMBER_JOIN_REQUEST`以支持监听新好友请求和新加群请求事件。
+* 添加`Session.handleFriendRequest`和`Session.handleMemberJoinRequest`以处理新好友请求和新加群请求。
+
+文档已更新，新事件和方法浏览[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)。
+
+
 ### 2020.04.12 → 1.5_alpha
 
 * 添加`Session.sendTempMessage`以支持发送临时消息。
