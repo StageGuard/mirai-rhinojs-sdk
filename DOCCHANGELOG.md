@@ -2,6 +2,11 @@
 
 ## 注：在新功能上文档更新日志与api更新日志基本一致，这里主要记录要修改的已存在的方法或者数据。
 
+### 2020.05.02
+BREAKING CHANGES
+* 文档大幅度修改
+* 修复文档头类型预览中超链接无法跳转的问题和一些错字([#2](https://github.com/StageGuard/mirai-rhinojs-sdk/issues/2))。
+
 ### 2020.04.07
 * 修改了`Permission`的父类为`Mirai.GroupInfo`
 * `GroupSenderInfo.getGroupInfo()`改为`GroupSenderInfo.getGroup()`
