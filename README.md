@@ -225,12 +225,14 @@ bot.subscribe({
 </details>
 </br>
 出现以下日志，即为运行成功
-```
+
+``` 
 Bot xxxxxxxxxx created.
 Verification thread started for xxxxxxxxxx.
 Message subscription thread started for xxxxxxxxxx.
 Session is verified: xxxx
 ```
+
 现在，你的bot就是复读机了(
 
 尝试对你的BOT发送戳一戳中的666。
