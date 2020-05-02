@@ -272,7 +272,6 @@ function() {
 									var p = JSON.parse(r.utils.http.get(r.server + "fetchMessage?sessionKey=" + r.__BotManager.get(qq).getSessionKey() + "&count=10"));
 									if (p.code != 0) {
 										if (p.code == 3) {
-											//迷惑错误3
 											r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
 										} else {
 											if (subscriber.error) subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
