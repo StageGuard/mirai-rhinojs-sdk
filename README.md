@@ -12,43 +12,236 @@ Rhino是一个可以在JavaScript上运行Java程序的库。
 
 ----
 
-## 快速开始：
-```bash
-#克隆项目
-git clone https://github.com/StageGuard/mirai-rhinojs-sdk
-#获取最新版rhino运行库
-wget https://github.com/mozilla/rhino/releases/download/Rhino1_7_12_Release/rhino-1.7.12
-.jar
-```
-
-之后你需要修改`demo.js`中`server`，`authKey`和`qqnum`变量。
+## 简介
+此项目为`mirai-console`的插件`mirai-api-http`提供简单易用的API。
+### 如何简单易用？
+下面提供一个简单的例子：
 ```javascript
-//HTTP API服务器地址
-const server = "http://localhost:8080/";
-//HTTP API服务器验证密钥
-const authKey = "stageguard";
-//要操作的机器人qq号
-const qqnum = "202746796";
+//将消息类型等静态常量注册进全局对象
+Mirai.registerClasses2Object(this);
+//设置http api服务器地址和验证密钥
+Mirai.setServer("http://localhost:8081/");
+Mirai.setAuthKey("stageguard");
+//创建一个新的bot
+var bot = Mirai.createNewBot(你的qq号);
+//订阅bot消息
+bot.subscribe({
+	//订阅群组消息
+	group: (group, sender, message) => {
+		//检测文本消息中是否包含文字
+		if(message.contain("回复测试")) {
+			//回复这个群友，以下方法是等价的
+			group.reply("回复你了1");
+			group.reply(Plain("回复你了2"));
+			sender.reply("回复你了3");
+			bot.sendGroupMessage(group, [Plain("回复你了4")], sender.getSourceId());
+		} else if(message.contain("at测试")) {
+			//at这个群友，以下方法是等价的
+			sender.at("at你了1");
+			group.at(sender, "at你了2");
+			group.send(At(sender) + Plain("at你了3"));
+			bot.send(group, At(sender) + Plain("at你了4"));
+			bot.send(group, At(sender), Plain("at你了5"));
+			bot.sendGroupMessage(group, [At(sender), Plain("at你了6")]);
+		} else if(message.contain("私聊我")){
+			//自动判断有无好友
+			sender.send("私聊你了1");
+			//自动判断有无好友
+			bot.send(sender, "私聊你了2");
+			//手动判断
+			if(bot.haveFriend(sender)) {
+				bot.sendFriendMessage(sender, [Plain("私聊你了3")]);
+			} else {
+				bot.sendTempMessage(sender, group, [Plain("私聊你了3")]);
+			}
+		//自找苦吃
+		} else if(message.contain("禁言我")){
+			if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+				group.send("我没有权限做那个！");
+			} else {
+				sender.mute();
+			}
+		//管理员定向禁言
+		} else if(message.contain("禁言")){
+			//group中的permission参数表示的是bot在这个群组的权限
+			//sender中的permission参数表示消息发送者在这个群组的权限
+			if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+				group.send("我没有权限做那个！");
+			} else {
+				//若无At类型消息，get()则返回一个参数都为null的新消息对象
+				if(message.get(AT).getTarget() != null) {
+					//禁言60秒，以下方法都是等价的
+					//获取at类型消息的target参数(被at的人的qq号)
+					var target = message.get(AT).getTarget();
+					bot.mute(group, target, 60);
+					bot.unmute(group, target);
+					group.mute(target, 60);
+					group.unmute(target);
+				}
+			}
+		}
+	},
+	friend: (sender, message) => {},
+	//订阅其他事件
+	event: (event) => {
+		switch(event.type) {
+			//自动拒绝好友请求
+			case NEW_FRIEND_REQUEST:
+				event.reject();
+			break;
+			//bot下线
+			case BOT_OFFLINE:
+			case BOT_OFFLINE_FORCE:
+			case BOT_OFFLINE_DROPPED:
+				bot.destroy();
+			break;
+		}
+	},
+	error: (e) => {
+		Log.e(e);
+	},
+});
 ```
-⑤运行脚本
-```bash
-java -jar rhino-1.7.12.jar -f source/demo.js
+mirai-rhinojs-sdk提供了非常灵活的语法，允许你多种方式实现同一功能，尽量做到符合逻辑，同时提供多种消息类型构造方式：
+```javascript
+sender.send(At(1355416608), Plain("at你了"));
+//文本消息的构造函数可以省略
+sender.send(At(1355416608), "at你了");
+//伪操作符重载
+//伪操作符重载方式不能省略文本消息的构造函数
+sender.send(At(1355416608) + Plain("at你了"));
 ```
-简单的消息捕捉功能脚本就运行起来了。
 
-![运行成功](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/status.png)
+mirai-rhinojs-sdk将会有两个版本，它们的用法大部分都是相同的，但略有区别：
 
-现在尝试对你的BOT发送戳一戳中的666。
+- <span style='color:#ff0000;'>(未实现)</span>`core`: 此版本将mirai-core作为依赖使用，不需要预先部署mirai-console，这也意味着使用此版本将无法使用mirai-console插件。
+- <span style='color:#00ff00;'>(可用)</span>`http`: 此版本基于mirai-console的插件mirai-api-http，该版本的通讯交互为轮询`fetchMessage`接口，处理消息并发送。
+
+----
+
+## 快速开始：
+### 我不会JavaScript
+你只需要在[W3school](https://www.w3school.com.cn/js/index.asp)简单学习基础语法就可以开始使用了。
+### 我会JavaScript
+
+现在开始使用！
+
+<details markdown='1'><summary>core版本</summary>
+
+core版本暂不可用，请等待发布
+
+</details>
+</br>
+<details markdown='1'><summary>http版本</summary>
+
+### 部署mirai-console
+
+前往[mirai-console](https://github.com/mamoe/mirai-console)和[mirai-api-http](https://github.com/mamoe/mirai-api-http)的release界面下载最新版本的wrapper和mirai-api-http，按照mirai-api-http的README做好配置。
+
+安卓用户请浏览[我的博客](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/#%E8%AF%A6%E7%BB%86%E8%BF%87%E7%A8%8B)在termux部署。
+
+### 运行脚本
+
+请选择你的平台查看
+</br>
+
+<details markdown='1'><summary>Android(AutoJS)</summary>
+
+### 新建一个脚本并复制以下内容
+```javascript
+//导入MiraiQQBot库
+eval(http.get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js").body.string());
+//创建你的bot
+Mirai.registerClasses2Object(scope);
+//http api服务器地址
+Mirai.setServer("http://localhost:8080/");
+//验证密钥
+Mirai.setAuthKey("stageguard");
+//新的not
+var bot = Mirai.createNewBot(你的bot qq号);
+
+//订阅bot消息
+bot.subscribe({
+	//订阅群组消息
+	group: (group, sender, message) => {
+		group.send(message);
+  },
+  friend: (sender, message) => {
+		if(message.get(POKE).getName() == SIXSIXSIX) {
+			sender.send(Poke(LIKE));
+		}
+	},
+ };
+```
+### 运行脚本
+
+</details>
+
+<details markdown='1'><summary>Windows/Linux/Android(Termux)</summary>
+
+### 下载rhino运行库
+前往[mozilla/rhino](https://github.com/mozilla/rhino)项目release界面下载rhino运行库(rhino-xxx.jar而不是rhino-runtime-xxx.jar)
+
+### 新建一个js脚本，复制以下内容
+
+```javascript
+//导入MiraiQQBot库
+(function(http_get) {
+	eval(http_get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js"));
+}((url) => {
+	var connection = (new java.net.URL(url)).openConnection(), bufferedReader, line, result = "";
+	connection.setDoInput(true);
+	var bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
+	while ((line = bufferedReader.readLine()) != null) result += (line + "\n");
+	bufferedReader.close(); return result;
+}));
+//创建你的bot
+Mirai.registerClasses2Object(scope);
+//http api服务器地址
+Mirai.setServer("http://localhost:8080/");
+//验证密钥
+Mirai.setAuthKey("stageguard");
+//新的not
+var bot = Mirai.createNewBot(你的bot qq号);
+
+//订阅bot消息
+bot.subscribe({
+	//订阅群组消息
+	group: (group, sender, message) => {
+		group.send(message);
+  },
+  friend: (sender, message) => {
+		if(message.get(POKE).getName() == SIXSIXSIX) {
+			sender.send(Poke(LIKE));
+		}
+	},
+ };
+```
+
+</details>
+
+</details>
+
+</details>
+
+出现以下日志，即为运行成功
+```
+Bot xxxxxxxxxx created.
+Verification thread started for xxxxxxxxxx.
+Message subscription thread started for xxxxxxxxxx.
+Session is verified: xxxx
+```
+现在，你的bot就是复读机了(
+
+尝试对你的BOT发送戳一戳中的666。
 
 ![Poke消息](https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/static/poke.png)
 
-----
-
-该项目同样可以在Android手机上运行，详细请浏览[我的博客](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/)
+尽情享用吧！
 
 ----
 
-所有功能均为测试版，若有BUG请开issue反馈。
+所有功能均为测试版，少部分功能(如加群响应，移除群员等功能未测试)，若有BUG请开issue反馈。
 
 有关SDK方法文档请参考[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
@@ -60,6 +253,16 @@ java -jar rhino-1.7.12.jar -f source/demo.js
 - [ ] 将MozillaRhino整合成mirai插件
 
 ## 更新日志
+
+### 2020.05.02 → 1.6.0
+
+<span style='color:#ff2e2e;'>BREAKING CHANGES</span>
+
+* 完全重构MiraiBot_HTTP.js并更名为MiraiQQBot.http.js
+* 简化部署方式
+* 新的bug。
+
+文档更新工作正在进行中...
 
 ### 2020.04.14 → 1.5.1
 
