@@ -58,7 +58,7 @@ function() {
 				return result.session;
 			}
 		},
-		getBot(qq): function(qq) {
+		getBot: function(qq) {
 			return this.__BotManager.get(qq);
 		}
 
@@ -67,6 +67,14 @@ function() {
 	r.init = function(globalObject) {
 		this.host = java.lang.System.getProperty("os.name");
 		if ("context" in globalObject) this.host = r.ANDROID_AUTOJS;
+		
+		r.Log.w("* MiraiQQBot.js版本： " + r.__version);
+		r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
+		r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
+		r.Log.w("* 因取消强制更新而导致MiraiQQBot.js出现bug，恕不解决！");
+		r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
+		r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
+
 	};
 	r.registerClasses2Object = function(obj) {
 		if (! (obj instanceof Object)) r.Log.e(obj + " is not an object.");
@@ -2009,12 +2017,6 @@ function() {
 
 		},
 	};
-	r.Log.w("* MiraiQQBot.js版本： " + r.__version);
-	r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
-	r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
-	r.Log.w("* 因取消强制更新而导致MiraiQQBot.js出现bug，恕不解决！");
-	r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
-	r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
-
+	
 	return r;
 } ()
