@@ -1996,7 +1996,7 @@ function() {
 		},
 		w: function(msg) {
 			if (r.host == r.ANDROID_AUTOJS) {
-				console.warning(msg);
+				console.warn(msg);
 			} else {
 				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[33mW\u001B[0m] " + String(msg));
 			}
