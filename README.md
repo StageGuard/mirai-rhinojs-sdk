@@ -150,7 +150,7 @@ core版本暂不可用，请等待发布
 ### 新建一个脚本并复制以下内容
 ```javascript
 //导入MiraiQQBot库
-eval(http.get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js").body.string());
+eval(http.get("https://raw.githubusercontent.com/StageGuard/mirai-rhinojs-sdk/master/source/wrapper.js").body.string());
 //注册一些常量对象到全局对象
 Mirai.registerClasses2Object(scope);
 //http api服务器地址
@@ -187,7 +187,7 @@ bot.subscribe({
 ```javascript
 //导入MiraiQQBot库
 (function(http_get) {
-  eval(http_get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js"));
+  eval(http_get("https://raw.githubusercontent.com/StageGuard/mirai-rhinojs-sdk/master/source/wrapper.js"));
 }((url) => {
   var connection = (new java.net.URL(url)).openConnection(), bufferedReader, line, result = "";
   connection.setDoInput(true);

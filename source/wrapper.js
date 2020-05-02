@@ -54,7 +54,7 @@ while(!iflag) {
 }*/
 
 var input = "http";
-scope["Mirai"] = eval("(" + http_get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/MiraiQQBot." + input + ".js") + ")");
+scope["Mirai"] = eval("(" + http_get("https://raw.githubusercontent.com/StageGuard/mirai-rhinojs-sdk/master/source/MiraiQQBot." + input + ".js") + ")");
 
 delete host;
 delete http_get;
