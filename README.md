@@ -264,7 +264,7 @@ Session is verified: xxxx
 * 简化部署方式
 * 新的bug。
 
-文档更新工作正在进行中...
+文档已更新，新事件和方法浏览[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)。
 
 ### 2020.04.14 → 1.5.1
 
