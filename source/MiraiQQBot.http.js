@@ -47,16 +47,19 @@ function() {
 				return this.__BotManager.get(qq);
 			} else {
 				Log.i("Bot " + qq + " created.");
-				return this.__BotManager.add(qq, this.generateSessionKey());
+				return this.__BotManager.add(qq, this.__generateSessionKey());
 			}
 		},
-		generateSessionKey: function() {
+		__generateSessionKey: function() {
 			var result = this.__auth();
 			if (result.code != 0) {
 				throw "Authenticate key is invaild.";
 			} else {
 				return result.session;
 			}
+		},
+		getBot(qq): function(qq) {
+			return this.__BotManager.get(qq);
 		}
 
 	};
@@ -66,10 +69,10 @@ function() {
 		if ("context" in globalObject) this.host = r.ANDROID_AUTOJS;
 	};
 	r.registerClasses2Object = function(obj) {
-		if(!(obj instanceof Object)) r.Log.e(obj + " is not an object.");
-		var reg = (source) => {
-			for(var i in source) {
-				if(source[i] instanceof Object && !(source[i] instanceof Function)) {
+		if (! (obj instanceof Object)) r.Log.e(obj + " is not an object.");
+		var reg = function(source) {
+			for (var i in source) {
+				if (source[i] instanceof Object && !(source[i] instanceof Function)) {
 					reg(source[i]);
 				} else {
 					obj[i] = source[i];
@@ -252,26 +255,28 @@ function() {
 								if (subscriber != null) {
 									var p = JSON.parse(r.utils.http.get(r.server + "fetchMessage?sessionKey=" + r.__BotManager.get(qq).getSessionKey() + "&count=10"));
 									if (p.code != 0) {
-										if(p.code == 3) {
+										if (p.code == 3) {
 											//迷惑错误3
-											r.__BotManager.get(qq).setSessionKey(r.generateSessionKey());
+											r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
 										} else {
 											if (subscriber.error) subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
 										}
-										
+
 									} else if (p.data.length != 0) {
 										var sessionKey = r.__BotManager.get(qq).getSessionKey();
 										for (var i in p.data) {
 											switch (p.data[i].type) {
 											case "GroupMessage":
-											case "TempMessage": 
 												if (subscriber.group) subscriber.group(new r.GroupInfo(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
+												break;
+											case "TempMessage":
+												if (subscriber.temp) subscriber.temp(new r.GroupInfo(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
 												break;
 											case "FriendMessage":
 												if (subscriber.friend) subscriber.friend(new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
 												break;
 											default:
-												if(subscriber.event) subscriber.event(new r.EventType[p.data[i].type](p.data[i], sessionKey));
+												if (subscriber.event) subscriber.event(new r.EventType[p.data[i].type](p.data[i], sessionKey));
 												break;
 											}
 										}
@@ -310,34 +315,25 @@ function() {
 		getSubscriber: function() {
 			return this.subscriber;
 		},
-		
+
 		//自动判断并发送消息
 		send: function(target) {
 			var msg = new Array();
-			for(var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
+			for (var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
 			//如果target是群组，直接发送群组消息
-			if(target instanceof r.GroupInfo) {
-				return r.__protocol.sendGroupMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg)
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource());
-			} else if(target instanceof r.MessageSender) {
+			if (target instanceof r.GroupInfo) {
+				return r.__protocol.sendGroupMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+			} else if (target instanceof r.MessageSender) {
 				//如果是发送者，判断是否有好友，有则直接发好友消息
 				var friends = r.__protocol.getFriendList(this.sessionKey);
-				for(var i in friends) {
-					if(friends[i].id == target.getId()) {
-						return r.__protocol.sendFriendMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg)
-							.discord(r.MessageTypeConst.QUOUE)
-							.discord(r.MessageTypeConst.SOURCE)
-						.toSource());
+				for (var i in friends) {
+					if (friends[i].id == target.getId()) {
+						return r.__protocol.sendFriendMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 					}
 				}
 				//若无，则判断发送者是否与bot在同一个群，有则发送临时消息
-				if(target.getPermission() != null) {
-					return r.__protocol.sendTempMessage(this.sessionKey, target.getId(), target.group.id, r.MessageChain.build(msg)
-						.discord(r.MessageTypeConst.QUOUE)
-						.discord(r.MessageTypeConst.SOURCE)
-						.toSource());
+				if (target.getPermission() != null) {
+					return r.__protocol.sendTempMessage(this.sessionKey, target.getId(), target.group.id, r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 				} else {
 					r.Log.e("Cannot send message(target=" + target + ")");
 					return 0;
@@ -374,8 +370,8 @@ function() {
 		haveFriend: function(friend) {
 			var id = (friend instanceof r.MessageSender) ? friend.getId() : friend;
 			var list = this.getFriendList();
-			for(var i in list) {
-				if(list[i].id == id) {
+			for (var i in list) {
+				if (list[i].id == id) {
 					return true;
 				}
 			}
@@ -385,13 +381,13 @@ function() {
 		haveGroup: function(group) {
 			var id = (group instanceof r.GroupInfo) ? group.etId() : group;
 			var list = this.getGroupList();
-			for(var i in list) {
-				if(list[i].id == id) {
+			for (var i in list) {
+				if (list[i].id == id) {
 					return true;
 				}
 			}
 			return false;
-		}, 
+		},
 		//管理员操作
 		mute: function(group, target, time) {
 			r.__protocol.mute(this.sessionKey, (group instanceof r.GroupInfo) ? group.getId() : group, (target instanceof r.MessageSender) ? target.getId() : target, Number(Math.min(Math.max(0, time == null ? 60 : time), 2591999)));
@@ -414,7 +410,7 @@ function() {
 		handleMemberJoinRequest: function(iArg, accept, msg) {
 			r.__protocol.handleMemberJoinRequest(this.sessionKey, iArg.eventId, iArg.fromId, iArg.groupId, accept, msg);
 		},
-		
+
 		destroy: function() {
 			r.__BotManager.remove(this.qq);
 			delete this;
@@ -429,7 +425,7 @@ function() {
 			this.id = (json == null) ? null: json.id;
 			this.name = (json == null) ? null: (json.memberName ? json.memberName: json.nickname);
 			this.permission = null;
-			this.group = (json == null) ? null: (json.group ? json.group : null);
+			this.group = (json == null) ? null: (json.group ? json.group: null);
 			if (this.group != null) {
 				this.permission = (json == null) ? null: json.permission;
 			}
@@ -444,45 +440,35 @@ function() {
 			getPermission: function() {
 				return this.permission;
 			},
-			
+
 			getSourceId: function() {
 				return this.sourceId;
 			},
-			
+
 			send: function() {
 				var friends = r.__protocol.getFriendList(this.session);
-				for(var i in friends) {
-					if(friends[i].id == this.getId()) {
-						return r.__protocol.sendFriendMessage(this.session, this.getId(), r.MessageChain.build(arguments)
-							.discord(r.MessageTypeConst.QUOUE)
-							.discord(r.MessageTypeConst.SOURCE)
-							.toSource());
+				for (var i in friends) {
+					if (friends[i].id == this.getId()) {
+						return r.__protocol.sendFriendMessage(this.session, this.getId(), r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 					}
 				}
 				return r.__protocol.sendTempMessage(this.session, this.getId(), this.group.id, r.MessageChain.build(arguments).toSource());
 			},
 			reply: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments)
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource(), this.sourceId);
+				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
 			},
 			at: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments)
-					.add(r.MessageType.At(this))
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).add(r.MessageType.At(this)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 			},
-			
+
 			mute: function(time) {
-				if(this.group != null) r.__protocol.mute(this.session, this.group.id, this.id, Number(Math.min(Math.max(0, time == null ? 60 : time), 2591999)));
+				if (this.group != null) r.__protocol.mute(this.session, this.group.id, this.id, Number(Math.min(Math.max(0, time == null ? 60 : time), 2591999)));
 			},
-			unmute: function(target) {
-				if(this.group != null) r.__protocol.unmute(this.session, this.group.id, this.id);
+			unmute: function() {
+				if (this.group != null) r.__protocol.unmute(this.session, this.group.id, this.id);
 			},
-			kick: function(target, msg) {
-				if(this.group != null) r.__protocol.kick(this.session, this.group.id, this.id, msg);
+			kick: function(msg) {
+				if (this.group != null) r.__protocol.kick(this.session, this.group.id, this.id, msg);
 			},
 
 			toString: function() {
@@ -510,25 +496,15 @@ function() {
 				return this.permission;
 			},
 			send: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments)
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 			},
 			reply: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments)
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource(), this.sourceId);
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
 			},
 			at: function(sender) {
 				var msg = new Array();
-				for(var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(msg)
-					.addF(r.MessageType.At(sender))
-					.discord(r.MessageTypeConst.QUOUE)
-					.discord(r.MessageTypeConst.SOURCE)
-					.toSource());
+				for (var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(msg).addF(r.MessageType.At(sender)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 			},
 			mute: function(target, time) {
 				r.__protocol.mute(this.session, this.id, (target instanceof r.MessageSender) ? target.getId() : target, Number(Math.min(Math.max(0, time == null ? 60 : time), 2591999)));
@@ -619,13 +595,13 @@ function() {
 			var chains = [];
 			for (var i in msgs) chains.push(JSON.parse(msgs[i]));
 			return this.__json2MessageArray(chains);
-		//通过MessageChain的方式构造
+			//通过MessageChain的方式构造
 		} else if (raw.length == 1 && (raw[0] instanceof r.MessageChain)) {
 			return raw[0];
-		//通过JSON Array的方式构造
+			//通过JSON Array的方式构造
 		} else if (raw.length == 1 && (raw[0] instanceof Array)) {
 			return this.__json2MessageArray(raw[0]);
-		//通过多参方法构造
+			//通过多参方法构造
 		} else if (raw.length > 1) {
 			var chains = [];
 			for (var i in raw) chains.push((raw[i] instanceof r.MessageChain) ? raw[i] : JSON.parse((raw[i].slice(0, 1) == "{") ? raw[i] : r.MessageType.Plain(raw[i])));
@@ -638,7 +614,7 @@ function() {
 
 	r.MessageChain.build = function(raw) {
 		var chain = this.__convert(raw);
-		if(chain instanceof r.MessageChain) {
+		if (chain instanceof r.MessageChain) {
 			return chain;
 		} else {
 			return new this(chain);
@@ -665,9 +641,9 @@ function() {
 			return this;
 		},
 		contain: function(text) {
-			for(var i in this.msg) {
-				if(this.msg[i].type == r.MessageTypeConst.PLAIN) {
-					if(this.msg[i].getText().search(text) != -1) return true;
+			for (var i in this.msg) {
+				if (this.msg[i].type == r.MessageTypeConst.PLAIN) {
+					if (this.msg[i].getText().search(text) != -1) return true;
 				}
 			}
 			return false;
@@ -754,7 +730,7 @@ function() {
 				this.id = id ? id: null;
 				this.groupId = groupId ? groupId: null;
 				this.senderId = senderId ? senderId: null;
-				this.origin = origin ? r.MessageChain.build([origin]): null;
+				this.origin = origin ? r.MessageChain.build([origin]) : null;
 			}
 			self.r.prototype = {
 				type: r.MessageTypeConst.QUOTE,
@@ -876,7 +852,7 @@ function() {
 						type: r.MessageTypeConst.IMAGE,
 						imageId: imageId,
 						url: url,
-						path: path == null ? null : path
+						path: path == null ? null: path
 					});
 				} ());
 				this.imageId = imageId ? imageId: null;
@@ -896,7 +872,7 @@ function() {
 						type: r.MessageTypeConst.IMAGE,
 						imageId: this.imageId,
 						url: this.url,
-						path: this.path == null ? null : this.path
+						path: this.path == null ? null: this.path
 					};
 				},
 			}
@@ -907,9 +883,9 @@ function() {
 				if (!flag && arguments.length) return (function() {
 					return JSON.stringify({
 						type: r.MessageTypeConst.IMAGE,
-						imageId: imageId == null ? null : imageId,
-						url: url == null ? null : url,
-						path: path == null ? null : path
+						imageId: imageId == null ? null: imageId,
+						url: url == null ? null: url,
+						path: path == null ? null: path
 					});
 				} ());
 				this.imageId = imageId ? imageId: null;
@@ -927,9 +903,9 @@ function() {
 				toSource: function() {
 					return {
 						type: r.MessageTypeConst.IMAGE,
-						imageId: this.imageId == null ? null : this.imageId,
-						url: this.url == null ? null : this.url,
-						path: this.path == null ? null : this.path
+						imageId: this.imageId == null ? null: this.imageId,
+						url: this.url == null ? null: this.url,
+						path: this.path == null ? null: this.path
 					};
 				},
 			}
@@ -1439,7 +1415,7 @@ function() {
 		GroupAllowAnonymousChatEvent: function() {},
 		GroupAllowConfessTalkEvent: function() {},
 		GroupAllowMemberInviteEvent: function() {},
-		NewFriendRequestEvent:  (function self() {
+		NewFriendRequestEvent: (function self() {
 			self.r = function(json, sessionKey) {
 				this.sessionKey = sessionKey;
 				this.eventId = json.eventId;
@@ -1480,7 +1456,7 @@ function() {
 			}
 			return self.r;
 		} ()),
-		MemberJoinRequestEvent:  (function self() {
+		MemberJoinRequestEvent: (function self() {
 			self.r = function(json, sessionKey) {
 				this.sessionKey = sessionKey;
 				this.eventId = json.eventId;
@@ -1531,46 +1507,6 @@ function() {
 			}
 			return self.r;
 		} ()),
-	};
-	r.Log = {
-		v: function(msg) {
-			if (r.host == r.ANDROID_AUTOJS) {
-				console.verbose(msg);
-			} else {
-				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][V] " + String(msg));
-			}
-
-		},
-		w: function(msg) {
-			if (r.host == r.ANDROID_AUTOJS) {
-				console.warning(msg);
-			} else {
-				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[33mW\u001B[0m] " + String(msg));
-			}
-
-		},
-		i: function(msg) {
-			if (r.host == r.ANDROID_AUTOJS) {
-				console.info(msg);
-			} else {
-				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[32mI\u001B[0m] " + String(msg));
-			}
-
-		},
-		e: function(msg) {
-			if (r.host == r.ANDROID_AUTOJS) {
-				console.error(msg);
-			} else {
-				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[31mE\u001B[0m] " + (function() {
-					if (msg instanceof Error) {
-						return "Error: " + msg.toString() + "(" + msg.lineNumber + ")";
-					} else {
-						return msg;
-					}
-				} ()) + "\u001B[0m");
-			}
-
-		},
 	};
 	//通讯接口，不应包含任何消息处理
 	r.__protocol = {
@@ -1924,16 +1860,161 @@ function() {
 					if (bufferedReader != null) bufferedReader.close();
 				}
 				return result;
-			}
+			},
 		},
+		file: {
+			STRING: 1,
+			STREAM: 2,
+			create: function(storage) {
+				storage = storage.split(java.io.File.separator);
+				if ((/\./i).test(storage[storage.length - 1]) && !(/^\./i).test(storage[storage.length - 1])) {
+					var path = "";
+					for (var i in storage) path += ((i == storage.length - 1) ? ("") : (storage[i]) + ((i == storage.length - 1) ? ("") : (java.io.File.separator)));
+					var file = path + storage[storage.length - 1];
+					var pathF = new java.io.File(path);
+					if (!pathF.isDirectory() || !pathF.exists()) pathF.mkdirs();
+					var fileF = new java.io.File(file);
+					if (!fileF.isFile() || !fileF.exists()) fileF.createNewFile();
+				} else {
+					var path = "";
+					for (var i in storage) path += ((storage[i]) + ((i == storage.length - 1) ? ("") : (java.io.File.separator)));
+					var file = new java.io.File(path);
+					if (!file.isDirectory() || !file.exists()) file.mkdirs();
+				}
+			},
+			remove: function(storage) {
+				var path = new java.io.File(storage);
+				if (path.exists()) path.delete();
+			},
+			read: function(path, mode) {
+				var file = new java.io.File(path);
+				if (file.exists()) {
+					try {
+						var inputStream = new java.io.FileInputStream(file);
+						if (mode == this.STREAM) {
+							return inputStream;
+							return new java.io.ByteArrayInputStream(byteArray);
+						} else {
+							var inputStreamReader = new java.io.InputStreamReader(inputStream);
+							var bufferedReader = new java.io.BufferedReader(inputStreamReader);
+							var stringBuffer = new java.lang.StringBuffer();
+							var line = null;
+							while ((line = bufferedReader.readLine()) != null) {
+								stringBuffer.append(line);
+								stringBuffer.append("\n");
+							}
+							inputStreamReader.close();
+							return stringBuffer.toString();
+						}
+					} catch(error) {
+						throw error;
+						return "";
+					}
+				} else {
+					throw ("File not exist: " + path);
+					return "";
+				}
+			},
+			writeString: function(path, string, isCover) {
+				try {
+					var file = new java.io.File(path);
+					if (!file.exists()) {
+						file.createNewFile();
+						isCover = true;
+					}
+					if (isCover == false) {
+						return;
+					}
+					var fileWriter = new java.io.FileWriter(file);
+					fileWriter.write(string);
+					fileWriter.close();
+				} catch(error) {
+					throw error;
+				}
+			},
+			writeStream: function(path, inputStream, isCover, isInputStreamClose) {
+				try {
+					var file = new java.io.File(path);
+					if (!file.exists()) {
+						file.createNewFile();
+						isCover = true;
+					}
+					if (isCover == false) {
+						if (isInputStreamClose) inputStream.close();
+						return;
+					}
+					var buffer = new java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 4096);
+					var outputStream = new java.io.FileOutputStream(file);
+					var len = -1;
+					while ((len = inputStream.read(buffer)) != -1) {
+						outputStream.write(buffer, 0, len);
+					}
+					if (isInputStreamClose) inputStream.close();
+					outputStream.flush();
+					outputStream.close();
+				} catch(error) {
+					throw error;
+				}
+			},
+			append: function(path, appendString) {
+				try {
+					var randomAccessFile = new java.io.RandomAccessFile(path, "rw");
+					randomAccessFile.seek(randomAccessFile.length());
+					randomAccessFile.write(java.lang.String(appendString).getBytes());
+					randomAccessFile.close();
+				} catch(error) {
+					throw error;
+				}
+			}
+		}
 
+	};
+	r.Log = {
+		v: function(msg) {
+			if (r.host == r.ANDROID_AUTOJS) {
+				console.verbose(msg);
+			} else {
+				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][V] " + String(msg));
+			}
+
+		},
+		w: function(msg) {
+			if (r.host == r.ANDROID_AUTOJS) {
+				console.warning(msg);
+			} else {
+				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[33mW\u001B[0m] " + String(msg));
+			}
+
+		},
+		i: function(msg) {
+			if (r.host == r.ANDROID_AUTOJS) {
+				console.info(msg);
+			} else {
+				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[32mI\u001B[0m] " + String(msg));
+			}
+
+		},
+		e: function(msg) {
+			if (r.host == r.ANDROID_AUTOJS) {
+				console.error(msg);
+			} else {
+				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[31mE\u001B[0m] " + (function() {
+					if (msg instanceof Error) {
+						return "Error: " + msg.toString() + "(" + msg.lineNumber + ")";
+					} else {
+						return msg;
+					}
+				} ()) + "\u001B[0m");
+			}
+
+		},
 	};
 	r.Log.w("* MiraiQQBot.js版本： " + r.__version);
 	r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
 	r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
-	r.Log.w("* 因取消强制更新而导致MiraiBot.js出现bug，恕不解决！");
+	r.Log.w("* 因取消强制更新而导致MiraiQQBot.js出现bug，恕不解决！");
 	r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
 	r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
-	
+
 	return r;
 } ()
