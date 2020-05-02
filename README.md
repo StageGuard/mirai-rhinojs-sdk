@@ -241,11 +241,13 @@ Session is verified: xxxx
 
 尽情享用吧！
 
+提供一些[demo](https://github.com/StageGuard/mirai-rhinojs-sdk/tree/master/demo)帮助快速理解并开发。
+
 ----
 
 所有功能均为测试版，少部分功能(如加群响应，移除群员等功能未测试)，若有BUG请开issue反馈。
 
-有关SDK方法文档请参考[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
+所有SDK提供的方法请参考[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)
 
 ----
 
@@ -255,6 +257,13 @@ Session is verified: xxxx
 - [ ] 将MozillaRhino整合成mirai插件
 
 ## 更新日志
+
+### 2020.05.02 → 1.6.1
+
+* 修复了MessageSender.at()消息的问题。
+* 添加`Mirai.loadExternalObject`允许加载外部脚本。
+
+文档已更新，新事件和方法浏览[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)。
 
 ### 2020.05.02 → 1.6.0
 

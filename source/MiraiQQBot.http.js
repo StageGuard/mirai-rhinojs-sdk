@@ -18,7 +18,7 @@
 
 function() {
 	var r = {
-		__version: "v1.6.0_http",
+		__version: "v1.6.1_http",
 
 		WINDOWS: "Windows",
 		LINUX: "Linux",
@@ -60,7 +60,15 @@ function() {
 		},
 		getBot: function(qq) {
 			return this.__BotManager.get(qq);
-		}
+		},
+		loadExternalObject: function(object, filep, name) {
+			try {
+				object[name] = eval("(" + (/^htt(p|ps):\/\//.test(filep) ? r.utils.http.get(filep) : r.utils.file.read(filep, r.utils.file.STRING)) + ")");
+				r.Log.i("External object(source=" + filep + ") is loaded.");
+			} catch(e) {
+				Log.e(e);
+			}
+		},
 
 	};
 
@@ -466,7 +474,7 @@ function() {
 				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
 			},
 			at: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).add(r.MessageType.At(this)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).addF(r.MessageType.At(this)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
 			},
 
 			mute: function(time) {
