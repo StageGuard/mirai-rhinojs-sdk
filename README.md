@@ -171,7 +171,7 @@ bot.subscribe({
 			sender.send(Poke(LIKE));
 		}
 	},
- };
+ });
 ```
 ### 运行脚本
 
@@ -215,7 +215,7 @@ bot.subscribe({
 			sender.send(Poke(LIKE));
 		}
 	},
- };
+ });
 ```
 
 </details>
