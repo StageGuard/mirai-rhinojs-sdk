@@ -26,80 +26,80 @@ Mirai.setAuthKey("stageguard");
 var bot = Mirai.createNewBot(你的qq号);
 //订阅bot消息
 bot.subscribe({
-	//订阅群组消息
-	group: (group, sender, message) => {
-		//检测文本消息中是否包含文字
-		if(message.contain("回复测试")) {
-			//回复这个群友，以下方法是等价的
-			group.reply("回复你了1");
-			group.reply(Plain("回复你了2"));
-			sender.reply("回复你了3");
-			bot.sendGroupMessage(group, [Plain("回复你了4")], sender.getSourceId());
-		} else if(message.contain("at测试")) {
-			//at这个群友，以下方法是等价的
-			sender.at("at你了1");
-			group.at(sender, "at你了2");
-			group.send(At(sender) + Plain("at你了3"));
-			bot.send(group, At(sender) + Plain("at你了4"));
-			bot.send(group, At(sender), Plain("at你了5"));
-			bot.sendGroupMessage(group, [At(sender), Plain("at你了6")]);
-		} else if(message.contain("私聊我")){
-			//自动判断有无好友
-			sender.send("私聊你了1");
-			//自动判断有无好友
-			bot.send(sender, "私聊你了2");
-			//手动判断
-			if(bot.haveFriend(sender)) {
-				bot.sendFriendMessage(sender, [Plain("私聊你了3")]);
-			} else {
-				bot.sendTempMessage(sender, group, [Plain("私聊你了3")]);
-			}
-		//自找苦吃
-		} else if(message.contain("禁言我")){
-			if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
-				group.send("我没有权限做那个！");
-			} else {
-				sender.mute();
-			}
-		//管理员定向禁言
-		} else if(message.contain("禁言")){
-			//group中的permission参数表示的是bot在这个群组的权限
-			//sender中的permission参数表示消息发送者在这个群组的权限
-			if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
-				group.send("我没有权限做那个！");
-			} else {
-				//若无At类型消息，get()则返回一个参数都为null的新消息对象
-				if(message.get(AT).getTarget() != null) {
-					//禁言60秒，以下方法都是等价的
-					//获取at类型消息的target参数(被at的人的qq号)
-					var target = message.get(AT).getTarget();
-					bot.mute(group, target, 60);
-					bot.unmute(group, target);
-					group.mute(target, 60);
-					group.unmute(target);
-				}
-			}
-		}
-	},
-	friend: (sender, message) => {},
-	//订阅其他事件
-	event: (event) => {
-		switch(event.type) {
-			//自动拒绝好友请求
-			case NEW_FRIEND_REQUEST:
-				event.reject();
-			break;
-			//bot下线
-			case BOT_OFFLINE:
-			case BOT_OFFLINE_FORCE:
-			case BOT_OFFLINE_DROPPED:
-				bot.destroy();
-			break;
-		}
-	},
-	error: (e) => {
-		Log.e(e);
-	},
+  //订阅群组消息
+  group: (group, sender, message) => {
+    //检测文本消息中是否包含文字
+    if(message.contain("回复测试")) {
+      //回复这个群友，以下方法是等价的
+      group.reply("回复你了1");
+      group.reply(Plain("回复你了2"));
+      sender.reply("回复你了3");
+      bot.sendGroupMessage(group, [Plain("回复你了4")], sender.getSourceId());
+    } else if(message.contain("at测试")) {
+      //at这个群友，以下方法是等价的
+      sender.at("at你了1");
+      group.at(sender, "at你了2");
+      group.send(At(sender) + Plain("at你了3"));
+      bot.send(group, At(sender) + Plain("at你了4"));
+      bot.send(group, At(sender), Plain("at你了5"));
+      bot.sendGroupMessage(group, [At(sender), Plain("at你了6")]);
+    } else if(message.contain("私聊我")){
+      //自动判断有无好友
+      sender.send("私聊你了1");
+      //自动判断有无好友
+      bot.send(sender, "私聊你了2");
+      //手动判断
+      if(bot.haveFriend(sender)) {
+        bot.sendFriendMessage(sender, [Plain("私聊你了3")]);
+      } else {
+        bot.sendTempMessage(sender, group, [Plain("私聊你了3")]);
+      }
+    //自找苦吃
+    } else if(message.contain("禁言我")){
+      if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+        group.send("我没有权限做那个！");
+      } else {
+        sender.mute();
+      }
+    //管理员定向禁言
+    } else if(message.contain("禁言")){
+      //group中的permission参数表示的是bot在这个群组的权限
+      //sender中的permission参数表示消息发送者在这个群组的权限
+      if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+        group.send("我没有权限做那个！");
+      } else {
+        //若无At类型消息，get()则返回一个参数都为null的新消息对象
+        if(message.get(AT).getTarget() != null) {
+          //禁言60秒，以下方法都是等价的
+          //获取at类型消息的target参数(被at的人的qq号)
+          var target = message.get(AT).getTarget();
+          bot.mute(group, target, 60);
+          bot.unmute(group, target);
+          group.mute(target, 60);
+          group.unmute(target);
+        }
+      }
+    }
+  },
+  friend: (sender, message) => {},
+  //订阅其他事件
+  event: (event) => {
+    switch(event.type) {
+      //自动拒绝好友请求
+      case NEW_FRIEND_REQUEST:
+        event.reject();
+      break;
+      //bot下线
+      case BOT_OFFLINE:
+      case BOT_OFFLINE_FORCE:
+      case BOT_OFFLINE_DROPPED:
+        bot.destroy();
+      break;
+    }
+  },
+  error: (e) => {
+    Log.e(e);
+  },
 });
 ```
 mirai-rhinojs-sdk提供了非常灵活的语法，允许你多种方式实现同一功能，尽量做到符合逻辑，同时提供多种消息类型构造方式：
@@ -162,15 +162,15 @@ var bot = Mirai.createNewBot(你的bot qq号);
 
 //订阅bot消息
 bot.subscribe({
-	//订阅群组消息
-	group: (group, sender, message) => {
-		group.send(message);
+  //订阅群组消息
+  group: (group, sender, message) => {
+    group.send(message);
   },
   friend: (sender, message) => {
-		if(message.get(POKE).getName() == SIXSIXSIX) {
-			sender.send(Poke(LIKE));
-		}
-	},
+    if(message.get(POKE).getName() == SIXSIXSIX) {
+      sender.send(Poke(LIKE));
+    }
+  },
  });
 ```
 ### 运行脚本
@@ -187,13 +187,13 @@ bot.subscribe({
 ```javascript
 //导入MiraiQQBot库
 (function(http_get) {
-	eval(http_get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js"));
+  eval(http_get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js"));
 }((url) => {
-	var connection = (new java.net.URL(url)).openConnection(), bufferedReader, line, result = "";
-	connection.setDoInput(true);
-	var bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
-	while ((line = bufferedReader.readLine()) != null) result += (line + "\n");
-	bufferedReader.close(); return result;
+  var connection = (new java.net.URL(url)).openConnection(), bufferedReader, line, result = "";
+  connection.setDoInput(true);
+  var bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
+  while ((line = bufferedReader.readLine()) != null) result += (line + "\n");
+  bufferedReader.close(); return result;
 }));
 //注册一些常量对象到全局对象
 Mirai.registerClasses2Object(scope);
@@ -206,15 +206,15 @@ var bot = Mirai.createNewBot(你的bot qq号);
 
 //订阅bot消息
 bot.subscribe({
-	//订阅群组消息
-	group: (group, sender, message) => {
-		group.send(message);
+  //订阅群组消息
+  group: (group, sender, message) => {
+    group.send(message);
   },
   friend: (sender, message) => {
-		if(message.get(POKE).getName() == SIXSIXSIX) {
-			sender.send(Poke(LIKE));
-		}
-	},
+    if(message.get(POKE).getName() == SIXSIXSIX) {
+      sender.send(Poke(LIKE));
+    }
+  },
  });
 ```
 
