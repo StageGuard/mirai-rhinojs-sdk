@@ -151,13 +151,13 @@ core版本暂不可用，请等待发布
 ```javascript
 //导入MiraiQQBot库
 eval(http.get("https://cdn.jsdelivr.net/gh/StageGuard/mirai-rhinojs-sdk/source/wrapper.js").body.string());
-//创建你的bot
+//注册一些常量对象到全局对象
 Mirai.registerClasses2Object(scope);
 //http api服务器地址
 Mirai.setServer("http://localhost:8080/");
 //验证密钥
 Mirai.setAuthKey("stageguard");
-//新的not
+//创建新的bot
 var bot = Mirai.createNewBot(你的bot qq号);
 
 //订阅bot消息
@@ -195,13 +195,13 @@ bot.subscribe({
 	while ((line = bufferedReader.readLine()) != null) result += (line + "\n");
 	bufferedReader.close(); return result;
 }));
-//创建你的bot
+//注册一些常量对象到全局对象
 Mirai.registerClasses2Object(scope);
 //http api服务器地址
 Mirai.setServer("http://localhost:8080/");
 //验证密钥
 Mirai.setAuthKey("stageguard");
-//新的not
+//创建新的bot
 var bot = Mirai.createNewBot(你的bot qq号);
 
 //订阅bot消息
@@ -223,7 +223,7 @@ bot.subscribe({
 </details>
 
 </details>
-
+</br>
 出现以下日志，即为运行成功
 ```
 Bot xxxxxxxxxx created.
