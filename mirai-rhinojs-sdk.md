@@ -34,6 +34,7 @@ Mirai类是基类。
 ### 方法预览
 | 返回类型 | 方法 |
 |:----:|:----|
+| PlaceHolder | PlaceHolder |
 | <span style='color:#aaaaaa;'>VOID</span> | `static` init(`Object` globalObject) |
 | <span style='color:#aaaaaa;'>VOID</span> | `static` registerClasses2Object(`Object` object) |
 | <span style='color:#aaaaaa;'>VOID</span> | `static` <span style='color:#97ff2e;font-size:10px;'>[http]</span>setAuthKey(`String` authKey) |
