@@ -1,5 +1,5 @@
 # mirai-rhinojs-sdk
-为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于Mozilla Rhino的SDK。
+为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于全平台的SDK。
 
 ## Mozilla Rhino是什么？
 Mozilla Rhino: JavaScript in Java
@@ -14,6 +14,13 @@ Rhino是一个可以在JavaScript上运行Java程序的库。
 
 ## 简介
 此项目为`mirai-console`的插件`mirai-api-http`提供简单易用的API。
+
+### 如何适用全平台？
+
+`Windows/Linux`用户可以下载rhino运行库运行脚本。
+
+安卓用户可以在`Termux`配置java环境或下载基于rhino的应用(如Auto.js)
+
 ### 如何简单易用？
 下面提供一个简单的例子：
 ```javascript
@@ -138,7 +145,7 @@ core版本暂不可用，请等待发布
 
 前往[mirai-console](https://github.com/mamoe/mirai-console)和[mirai-api-http](https://github.com/mamoe/mirai-api-http)的release界面下载最新版本的wrapper和mirai-api-http，按照mirai-api-http的README做好配置。
 
-安卓用户请浏览[我的博客](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/#%E8%AF%A6%E7%BB%86%E8%BF%87%E7%A8%8B)在termux部署。
+安卓用户请浏览[mzdluo123/MiraiAndroid](https://github.com/mzdluo123/MiraiAndroid)项目下载mirai android app或浏览[我的博客](https://stageguard.top/2020/04/01/run-qqbot-on-termux-android/#%E8%AF%A6%E7%BB%86%E8%BF%87%E7%A8%8B)在termux部署。
 
 ### 运行脚本
 
@@ -217,6 +224,12 @@ bot.subscribe({
   },
  });
 ```
+### 运行脚本
+
+```
+java -jar rhino.js -f your_script.js
+```
+
 
 </details>
 
