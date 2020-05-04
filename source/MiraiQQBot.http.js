@@ -46,7 +46,7 @@ function() {
 			if (this.__BotManager.has(qq)) {
 				return this.__BotManager.get(qq);
 			} else {
-				Log.i("Bot " + qq + " created.");
+				r.Log.i("Bot " + qq + " created.");
 				return this.__BotManager.add(qq, this.__generateSessionKey());
 			}
 		},
@@ -66,7 +66,7 @@ function() {
 				object[name] = eval("(" + (/^htt(p|ps):\/\//.test(filep) ? r.utils.http.get(filep) : r.utils.file.read(filep, r.utils.file.STRING)) + ")");
 				r.Log.i("External object(source=" + filep + ") is loaded.");
 			} catch(e) {
-				Log.e(e);
+				r.Log.e(e);
 			}
 		},
 
@@ -209,7 +209,7 @@ function() {
 							this.queue[i][1] = this.newThread(qq);
 							this.queue[i][1].start();
 						}
-						Log.i("Verification thread started for " + qq + ".");
+						r.Log.i("Verification thread started for " + qq + ".");
 					}
 				}
 			},
@@ -240,7 +240,7 @@ function() {
 							this.subscriber[i][1] = this.newThread(qq);
 							this.subscriber[i][1].start();
 						}
-						Log.i("Message subscription thread started for " + qq + ".");
+						r.Log.i("Message subscription thread started for " + qq + ".");
 						return;
 					}
 				}
@@ -274,6 +274,7 @@ function() {
 									if (p.code != 0) {
 										if (p.code == 3) {
 											r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
+											r.__BotManager.VerifyManager.start(qq);
 										} else {
 											if (subscriber.error) subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
 										}
