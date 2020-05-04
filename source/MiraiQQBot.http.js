@@ -174,7 +174,8 @@ function() {
 									throw "Bot " + qq + " is not existed.";
 									break;
 								case 3:
-									throw "Session is invaild or not existed.";
+									r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
+									// "Session is invaild or not existed.";
 									break;
 								case 4:
 									throw "Session is unauthenticated.";
