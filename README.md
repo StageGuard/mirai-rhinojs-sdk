@@ -13,7 +13,7 @@ Rhino是一个可以在JavaScript上运行Java程序的库。
 ----
 
 ## 简介
-此项目为`mirai-console`的插件`mirai-api-http`提供简单易用的API。
+为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于全平台的SDK。
 
 ### 如何适用全平台？
 
