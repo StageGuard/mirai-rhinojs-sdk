@@ -63,7 +63,7 @@ bot.subscribe({
       }
     //自找苦吃
     } else if(message.contain("禁言我")){
-      if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+      if(group.getPermission() == MEMBER || sender.getPermission() == OWNER) {
         group.send("我没有权限做那个！");
       } else {
         sender.mute();
