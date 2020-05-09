@@ -269,7 +269,7 @@ function() {
 							while (!java.lang.Thread.interrupted()) {
 								java.lang.Thread.sleep(150);
 								var subscriber = r.__BotManager.get(qq).getSubscriber();
-								if (subscriber != null) {
+								if (subscriber != null) {try{
 									var p = JSON.parse(r.utils.http.get(r.server + "fetchMessage?sessionKey=" + r.__BotManager.get(qq).getSessionKey() + "&count=10"));
 									if (p.code != 0) {
 										if (p.code == 3) {
@@ -298,7 +298,13 @@ function() {
 											}
 										}
 									}
-								}
+								}catch(e) {
+									if(/500/.test(e.toString())) {
+										r.Log.w("Http server crashed an error, if this error log continues to print, please suumit this issue to mamoe/mirai-api-http with full error log.");
+									} else {
+										throw e;
+									}
+								}}
 							}
 							return;
 						} catch(error) {
