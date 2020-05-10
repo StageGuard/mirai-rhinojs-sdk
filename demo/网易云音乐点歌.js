@@ -228,7 +228,7 @@ var r = {
 						if(num > search.result.songCount) return;
 						var song = JSON.parse(r.API.detail_song_mp3(search.result.songs[num].id));
 						var album = JSON.parse(r.API.detail_album(search.result.songs[num].album.id));
-						group.send(App(
+						(function(){return group == null ? sender : group}()).send(App(
 							r.app_string
 								.replace("{$current_time}", Number(String((new Date()).getTime()).substr(0, 10)))
 								.replace("{$desc}", (function(artists) {
