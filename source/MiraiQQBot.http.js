@@ -18,7 +18,7 @@
 
 function() {
 	var r = {
-		__version: "v1.6.1_http",
+		__version: "v1.6.2_http",
 
 		WINDOWS: "Windows",
 		LINUX: "Linux",
@@ -99,23 +99,17 @@ function() {
 		reg(r.MessageTypeConst);
 		reg(r.EventTypeConst);
 		reg(r.GroupInfo.Permission);
+		reg(r.utils);
 		obj["Log"] = r.Log;
 	};
 
 	r.__BotManager = {
-		/*{
-			qq: 1355416608,
-			instance: a Mirai.Bot object
-		}*/
 		bots: [],
 		add: function(qq, sessionKey) {
 			this.bots.push({
 				qq: qq,
 				instance: new r.Bot(qq, sessionKey)
 			});
-			this.VerifyManager.add(qq);
-			this.VerifyManager.start(qq);
-			this.MessageSubscriberManager.start(qq);
 			return this.get(qq);
 		},
 		get: function(qq) {
@@ -138,192 +132,83 @@ function() {
 			for (var i in this.bots) {
 				if (this.bots[i].qq == qq) {
 					this.bots.splice(i, 1);
-					this.VerifyManager.remove(qq);
-					this.MessageSubscriberManager.remove(qq);
 				}
 			}
 		},
-		VerifyManager: {
-			//[qq, thread]
-			queue: [],
-			add: function(qq) {
-				this.queue.push([qq, this.newThread(qq)]);
-			},
-			remove: function(qq) {
-				for (var i in this.queue) {
-					if (this.queue[i][0] == qq) {
-						this.queue[i][1].interrupt();
-						this.queue.splice(i, 1);
-					}
-				}
-			},
-			newThread: function(qq) {
-				return new java.lang.Thread(new java.lang.Runnable({
-					run: function() {
-						try {
-							while (!java.lang.Thread.interrupted()) {
-								var result = JSON.parse(r.utils.http.post(r.server + "verify", JSON.stringify({
-									sessionKey: r.__BotManager.get(qq).getSessionKey(),
-									qq: qq
-								})));
-								switch (result.code) {
-								case 1:
-									throw "Authenticate key is invaild";
-									break;
-								case 2:
-									throw "Bot " + qq + " is not existed.";
-									break;
-								case 3:
-									r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
-									// "Session is invaild or not existed.";
-									break;
-								case 4:
-									throw "Session is unauthenticated.";
-									break;
-								case 10:
-									throw "Permission denied for bot " + qq;
-									break;
-								case 0:
-									r.Log.i("Session is verified: " + r.__BotManager.get(qq).getSessionKey());
-									break;
-								}
-								//10分钟
-								java.lang.Thread.sleep(600000);
-							}
-							return;
-						} catch(error) {
-							if (! (/InterruptedException/i).test(error.toString())) {
-								throw error;
-							}
-						}
-					},
-				}));
-			},
-			start: function(qq) {
-				for (var i in this.queue) {
-					if (this.queue[i][0] == qq) {
-						if (this.queue[i][1].getState() == java.lang.Thread.State.NEW) {
-							this.queue[i][1].start();
-						} else {
-							this.queue[i][1].interrupt();
-							this.queue[i][1] = this.newThread(qq);
-							this.queue[i][1].start();
-						}
-						r.Log.i("Verification thread started for " + qq + ".");
-					}
-				}
-			},
-			stop: function(qq) {
-				for (var i in this.queue) {
-					if (this.queue[i][0] == qq) {
-						this.queue[i][1].interrupt();
-					}
-				}
-			}
-		},
-		MessageSubscriberManager: {
-			//正在订阅消息的qq号
-			//[qq, thread]
-			subscriber: [],
-
-			add: function(qq) {
-				this.subscriber.push([qq, this.newThread(qq)]);
-			},
-
-			start: function(qq) {
-				for (var i in this.subscriber) {
-					if (this.subscriber[i][0] == qq) {
-						if (this.subscriber[i][1].getState() == java.lang.Thread.State.NEW) {
-							this.subscriber[i][1].start();
-						} else {
-							this.subscriber[i][1].interrupt();
-							this.subscriber[i][1] = this.newThread(qq);
-							this.subscriber[i][1].start();
-						}
-						r.Log.i("Message subscription thread started for " + qq + ".");
-						return;
-					}
-				}
-				this.add(qq);
-				this.start(qq);
-			},
-			stop: function(qq) {
-				for (var i in this.subscriber) {
-					if (this.subscriber[i][0] == qq) {
-						this.subscriber[i][1].interrupt();
-					}
-				}
-			},
-			remove: function(qq) {
-				for (var i in this.subscriber) {
-					if (this.subscriber[i][0] == qq) {
-						this.subscriber[i][1].interrupt();
-						this.subscriber.splice(i, 1);
-					}
-				}
-			},
-			newThread: function(qq) {
-				return new java.lang.Thread(new java.lang.Runnable({
-					run: function() {
-						try {
-							while (!java.lang.Thread.interrupted()) {
-								java.lang.Thread.sleep(150);
-								var subscriber = r.__BotManager.get(qq).getSubscriber();
-								if (subscriber != null) {try{
-									var p = JSON.parse(r.utils.http.get(r.server + "fetchMessage?sessionKey=" + r.__BotManager.get(qq).getSessionKey() + "&count=10"));
-									if (p.code != 0) {
-										if (p.code == 3) {
-											r.__BotManager.get(qq).setSessionKey(r.__generateSessionKey());
-											r.__BotManager.VerifyManager.start(qq);
-										} else {
-											if (subscriber.error) subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
-										}
-
-									} else if (p.data.length != 0) {
-										var sessionKey = r.__BotManager.get(qq).getSessionKey();
-										for (var i in p.data) {
-											switch (p.data[i].type) {
-											case "GroupMessage":
-												if (subscriber.group) subscriber.group(new r.GroupInfo(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
-												break;
-											case "TempMessage":
-												if (subscriber.temp) subscriber.temp(new r.GroupInfo(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
-												break;
-											case "FriendMessage":
-												if (subscriber.friend) subscriber.friend(new r.MessageSender(sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
-												break;
-											default:
-												if (subscriber.event) subscriber.event(new r.EventType[p.data[i].type](p.data[i], sessionKey));
-												break;
-											}
-										}
-									}
-								}catch(e) {
-									if(/500/.test(e.toString())) {
-										r.Log.w("Http server crashed an error, if this error log continues to print, please suumit this issue to mamoe/mirai-api-http with full error log.");
-									} else {
-										throw e;
-									}
-								}}
-							}
-							return;
-						} catch(error) {
-							if (! (/InterruptedException/i).test(error.toString())) {
-								var subscriber = r.__BotManager.get(qq).getSubscriber();
-								if (subscriber != null && subscriber.error) subscriber.error(error);
-							}
-						}
-					},
-				}));
-			}
-		}
 	};
-	//qq号与session不是一一对应的关系
-	//为了方便管理这里就设置为一一对应的关系
 	r.Bot = function(qq, sessionKey) {
 		this.sessionKey = sessionKey;
 		this.qq = qq;
 		this.subscriber = null;
+		
+		this.verify_sync = r.utils.rsync.flag("SVSync" + this.qq).loop((s) => {
+			var result = JSON.parse(r.utils.http.post(r.server + "verify", JSON.stringify({
+				sessionKey: this.sessionKey,
+				qq: this.qq
+			})));
+			switch (result.code) {
+				case 1:
+					throw "Authenticate key is invaild";
+				break;
+				case 2:
+					throw "Bot " + this.qq + " is not existed.";
+				break;
+				case 3:
+					r.Log.w("Session " + this.sessionKey + " is invaild, regenerating session key for bot " + this.qq);
+					this.setSessionKey(r.__generateSessionKey());
+				break;
+				case 4:
+					//throw "Session is unauthenticated.";
+				break;
+				case 10:
+					throw "Permission denied for bot " + qq;
+				break;
+				case 0:
+					r.Log.i("Session is verified: " + this.sessionKey + "(" + this.qq + ")");
+				break;
+			}
+		}, -1, 600000);
+		r.Log.i("Verification thread started for " + this.qq + ".");
+		this.subscribe_sync = new r.utils.rsync((s) => {
+			s.sleep(150);
+			if (this.subscriber != null) {try{
+				var p = JSON.parse(r.utils.http.get(r.server + "fetchMessage?sessionKey=" + this.sessionKey + "&count=10"));
+				if (p.code != 0) {
+					if (p.code == 3) {
+						this.setSessionKey(r.__generateSessionKey());
+						this.verify_sync.stop();
+						this.verify_sync.run();
+					} else {
+						if (this.subscriber.error) this.subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
+					}
+				} else if (p.data.length != 0) {
+					for (var i in p.data) {
+						switch (p.data[i].type) {
+							case "GroupMessage":
+								if (this.subscriber.group) this.subscriber.group(new r.GroupInfo(this.sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(this.sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
+							break;
+							case "TempMessage":
+								if (this.subscriber.temp) this.subscriber.temp(new r.GroupInfo(this.sessionKey, p.data[i].messageChain[0].id, p.data[i].sender.group), new r.MessageSender(this.sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
+							break;
+							case "FriendMessage":
+								if (this.subscriber.friend) this.subscriber.friend(new r.MessageSender(this.sessionKey, p.data[i].messageChain[0].id, p.data[i].sender), r.MessageChain.build([p.data[i].messageChain]));
+							break;
+							default:
+								if (this.subscriber.event) this.subscriber.event(new r.EventType[p.data[i].type](p.data[i], this.sessionKey));
+							break;
+						}
+					}
+				}
+			}catch(e) {
+				if(/500/.test(e.toString())) {
+					r.Log.w("Http server crashed an error, if this error log continues to print, please suumit this issue to mamoe/mirai-api-http with full error log.");
+				} else {
+					throw e;
+				}
+			}}
+		});
+		this.subscribe_sync.flag("MsgSub" + this.qq);
+		this.subscribe_sync.loop_times(-1);
 	};
 	r.Bot.prototype = {
 		getSessionKey: function() {
@@ -334,6 +219,10 @@ function() {
 		},
 		subscribe: function(obj) {
 			this.subscriber = obj;
+			if(obj != null) {
+				r.Log.i("Message subscription thread started for " + this.qq + ".");
+				this.subscribe_sync.run();
+			}
 		},
 		getSubscriber: function() {
 			return this.subscriber;
@@ -1544,7 +1433,7 @@ function() {
 				if (quoteId != null) params.quote = Number(quoteId);
 				var result = JSON.parse(r.utils.http.post(r.server + "sendGroupMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]));
 				if (result.code == 0) {
-					r.Log.i("Message have sent(groupId=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.i("[" + sessionKey + "] Message have sent(groupId=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
 					r.Log.e("Error while sending group message. (groupId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
@@ -1565,7 +1454,7 @@ function() {
 				if (quoteId != null) params.quote = Number(quoteId);
 				var result = JSON.parse(r.utils.http.post(r.server + "sendFriendMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]));
 				if (result.code == 0) {
-					r.Log.i("Message have sent(friendId=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.i("[" + sessionKey + "] Message have sent(friendId=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
 					r.Log.e("Error while sending group message. (groupId=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
@@ -1588,7 +1477,7 @@ function() {
 				var p = r.utils.http.post(r.server + "sendTempMessage", JSON.stringify(params), [["Content-Type", "text/plain; charset=UTF-8"]]);
 				var result = JSON.parse(p);
 				if (result.code == 0) {
-					r.Log.i("Message have sent(target=" + target + ", messageId=" + result.messageId + ")");
+					r.Log.i("[" + sessionKey + "] Message have sent(target=" + target + ", messageId=" + result.messageId + ")");
 					return result.messageId;
 				} else {
 					r.Log.e("Error while sending temp message. (target=" + target + ", messageChain=" + messageChain.toString() + ")\n" + result.msg);
@@ -1989,7 +1878,200 @@ function() {
 					throw error;
 				}
 			}
-		}
+		},
+		rsync: (function() {
+			var r = function(func) {
+				this.i_loop_times = 1;
+				this.i_interval = 0;
+				this.i_coroutine_count = 1;
+				this.i_flag = (function(length) {
+					var string = "0123456789abcde";
+					var stringBuffer = new java.lang.StringBuffer();
+					for (var i = 0; i < length; i++) {
+						stringBuffer.append(string.charAt(Math.round(Math.random() * (string.length - 1))));
+					}
+					return stringBuffer.toString();
+				} (5));
+				this.i_name = "RsyncThreadGroup-unnamed@" + this.i_flag;
+				this.i_func = func == null ? new Function() : func;
+				this.threads = [];
+			}
+			r.prototype = {
+				__runnable_function: function() {
+					try {
+						var lt = this.i_loop_times;
+						while (lt != 0 && !java.lang.Thread.currentThread().isInterrupted()) {
+							this.i_func(this, Number(String(java.lang.Thread.currentThread().getName()).split("-")[2]));
+							if (this.i_interval > 0) this.sleep(this.i_interval);
+							if (lt > 0) lt--;
+						}
+					} catch(error) {
+						if (! (/InterruptedException/i).test(error.toString())) {
+							throw error;
+						}
+					}
+				},
+
+				run: function(obj) {
+					if (this._isRunning()) throw ("Thread " + this.i_name + " is running.");
+					if (obj != null) this.i_func = obj;
+					if (this.threads.length != 0) this.threads.splice(0, this.threads.length);
+					const self = this;
+					for (var i = 0; i < this.i_coroutine_count; i++) {
+						var t = new java.lang.Thread(new java.lang.Runnable({
+							run: function() {
+								self.__runnable_function();
+							},
+						}));
+						t.setName(this.i_name + "-" + i);
+						this.threads.push(t);
+						t.start();
+					}
+					return this;
+				},
+				loop: function(obj, times, interval) {
+					this.loop_times(times == null ? -1 : times);
+					this.interval(interval == null ? 0 : interval);
+					return this.run(obj);
+				},
+				coroutine: function(obj, count) {
+					this.co_count(count == null ? 1 : count);
+					return this.run(obj);
+				},
+
+				_isRunning: function() {
+					for (var i in this.threads) {
+						if (this.threads[i].getState() != java.lang.Thread.State.TERMINATED) {
+							return true;
+						}
+					}
+					return false;
+				},
+
+				_containsThread: function(id) {
+					for (var i in this.threads) {
+						if (this.threads[i].getId() == id) return true;
+					}
+					return false;
+				},
+
+				flag: function(v) {
+					if (v != null) {
+						if (this._containsThread(java.lang.Thread.currentThread().getId())) {
+							throw "Changing its own property in self thread is not permitted.";
+						};
+						this.i_name = "RsyncThreadGroup-" + v.replace(/(\t|\s|\r|\n|\-)/gi, "") + "@" + this.i_flag;
+						return this;
+					} else {
+						return this.i_name;
+					}
+				},
+				interval: function(v) {
+					if (typeof(v) == "number") {
+						if (this._containsThread(java.lang.Thread.currentThread().getId())) {
+							throw "Changing its own property in self thread is not permitted.";
+						};
+						this.i_interval = v;
+						return this;
+					} else {
+						return this.i_interval;
+					}
+				},
+				co_count: function(v) {
+					if (typeof(v) == "number") {
+						if (this._containsThread(java.lang.Thread.currentThread().getId())) {
+							throw "Changing its own property in self thread is not permitted.";
+						};
+						this.i_coroutine_count = v;
+						return this;
+					} else {
+						return this.i_co_count;
+					}
+				},
+				loop_times: function(v) {
+					if (typeof(v) == "number") {
+						if (this._containsThread(java.lang.Thread.currentThread().getId())) {
+							throw "Changing its own property in self thread is not permitted.";
+						};
+						this.i_loop_times = v;
+						return this;
+					} else {
+						return this.i_loop_times;
+					}
+
+				},
+				_func: function(v) {
+					if (this._containsThread(java.lang.Thread.currentThread().getId())) {
+						throw "Changing its own property in self thread is not permitted.";
+					}
+					this.i_func = v;
+					return this;
+				},
+				sleep: function(v) {
+					var times = (v > 100) ? (v - (v % 100)) / 100 + 1 : 1;
+					var t = v;
+					while (times > 0 && !java.lang.Thread.currentThread().isInterrupted()) {
+						if (t > 100) {
+							java.lang.Thread.sleep(100);
+							t -= 100;
+							times--;
+						} else {
+							java.lang.Thread.sleep(t);
+							times--;
+						}
+					}
+				},
+				stop: function() {
+					for (var i in this.threads) {
+						if (this.threads[i].getState() != java.lang.Thread.State.TERMINATED) {
+							this.threads[i].interrupt();
+							if (java.lang.Thread.currentThread().getId() == this.threads[i].getId()) {
+								throw new java.lang.InterruptedException(this.threads[i].getName() + " interrupted.");
+							}
+						}
+					}
+				},
+			};
+			r.interval = function(n) {
+				var a = new this();
+				a.interval(n);
+				return a;
+			};
+			r.loop_times = function(n) {
+				var a = new this();
+				a.loop_times(n);
+				return a;
+			};
+			r.co_count = function(n) {
+				var a = new this();
+				a.co_count(n);
+				return a;
+			};
+			r.flag = function(n) {
+				var a = new this();
+				a.flag(n);
+				return a;
+			};
+			r.run = function(obj) {
+				var a = new this(obj);
+				a.run();
+				return a;
+			};
+			r.coroutine = function(obj, count) {
+				var a = new this(obj);
+				a.co_count(count == null ? 1 : count);
+				a.run();
+				return a;
+			};
+			r.loop = function(obj, times, interval) {
+				var a = new this(obj);
+				a.loop_times(times == null ? -1 : times);
+				a.interval(interval == null ? 0 : interval);
+				a.run();
+				return a;
+			};
+			return r;
+		} ()),
 
 	};
 	r.Log = {
@@ -2021,7 +2103,7 @@ function() {
 			if (r.host == r.ANDROID_AUTOJS) {
 				console.error(msg);
 			} else {
-				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[31mE\u001B[0m] " + (function() {
+				java.lang.System.out.println("[" + (new java.text.SimpleDateFormat("yyyy.MM.dd hh:mm:ss")).format((new Date()).getTime()) + "][\u001B[31mE\u001B[0m] In thread " + java.lang.Thread.currentThread().getName() + " : " + (function() {
 					if (msg instanceof Error) {
 						return "Error: " + msg.toString() + "(" + msg.lineNumber + ")";
 					} else {

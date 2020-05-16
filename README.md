@@ -271,6 +271,15 @@ Session is verified: xxxx
 
 ## 更新日志
 
+### 2020.05.17 → 1.6.2
+
+* 调用`Mirai.registerClasses2Object`时`Mirai.utils`类也会注册到指定对象。
+* 添加`Mirai.__BotManager`中的检验管理和消息监听管理，其管理工作移动到`Mirai.Bot`。
+* 添加工具类`Mirai.utils.rsync`，允许在rhino中异步执行(其本质是`Thread`的封装)。
+* 修复了一些逻辑问题和bug。
+
+`rsync`工具类用法将在24小时之内更新。
+
 ### 2020.05.02 → 1.6.1
 
 * 修复了MessageSender.at()消息的问题。
