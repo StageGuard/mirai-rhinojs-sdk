@@ -8,6 +8,11 @@ bot.subscribe({
   group: (group, sender, message) => {
     //这里的subscribe是在XXX里定义的，你也可以换成你的方式。
     XXX.subscribe(group, sender, message);
+    //为了防止耗时操作阻塞监听线程，你可以使用rsync异步执行
+    rsync.run((s) => XXX.subscribe(group, sender, message));
   },
+  friend: (sender, message) => {
+    XXX.subscribe(null, sender, message);
+  }
  });
 ```
