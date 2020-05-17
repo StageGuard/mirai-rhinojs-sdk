@@ -278,7 +278,8 @@ Session is verified: xxxx
 * 添加工具类`Mirai.utils.rsync`，允许在rhino中异步执行(其本质是`Thread`的封装)。
 * 修复了一些逻辑问题和bug。
 
-`rsync`工具类用法将在24小时之内更新。
+~~`rsync`工具类用法将在24小时之内更新。~~已更新。
+
 
 ### 2020.05.02 → 1.6.1
 
