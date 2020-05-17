@@ -156,6 +156,7 @@ function() {
 				case 3:
 					r.Log.w("Session " + this.sessionKey + " is invaild, regenerating session key for bot " + this.qq);
 					this.setSessionKey(r.__generateSessionKey());
+					this.verify_sync.restart();
 				break;
 				case 4:
 					//throw "Session is unauthenticated.";
@@ -176,8 +177,7 @@ function() {
 				if (p.code != 0) {
 					if (p.code == 3) {
 						this.setSessionKey(r.__generateSessionKey());
-						this.verify_sync.stop();
-						this.verify_sync.run();
+						this.verify_sync.restart();
 					} else {
 						if (this.subscriber.error) this.subscriber.error(new Error(String("Error while hooking messages: {$msg}({$code})").replace("{$code}", p.code).replace("{$msg}", p.msg)));
 					}
@@ -1883,7 +1883,7 @@ function() {
 			var r = function(func) {
 				this.i_loop_times = 1;
 				this.i_interval = 0;
-				this.i_coroutine_count = 1;
+				this.i_corun_count = 1;
 				this.i_flag = (function(length) {
 					var string = "0123456789abcde";
 					var stringBuffer = new java.lang.StringBuffer();
@@ -1912,12 +1912,12 @@ function() {
 					}
 				},
 
-				run: function(obj) {
-					if (this._isRunning()) throw ("Thread " + this.i_name + " is running.");
+				run: function(obj, isForce) {
+					if (this._isRunning() && !isForce) throw ("Thread " + this.i_name + " is running.");
 					if (obj != null) this.i_func = obj;
 					if (this.threads.length != 0) this.threads.splice(0, this.threads.length);
 					const self = this;
-					for (var i = 0; i < this.i_coroutine_count; i++) {
+					for (var i = 0; i < this.i_corun_count; i++) {
 						var t = new java.lang.Thread(new java.lang.Runnable({
 							run: function() {
 								self.__runnable_function();
@@ -1934,7 +1934,7 @@ function() {
 					this.interval(interval == null ? 0 : interval);
 					return this.run(obj);
 				},
-				coroutine: function(obj, count) {
+				corun: function(obj, count) {
 					this.co_count(count == null ? 1 : count);
 					return this.run(obj);
 				},
@@ -1982,7 +1982,7 @@ function() {
 						if (this._containsThread(java.lang.Thread.currentThread().getId())) {
 							throw "Changing its own property in self thread is not permitted.";
 						};
-						this.i_coroutine_count = v;
+						this.i_corun_count = v;
 						return this;
 					} else {
 						return this.i_co_count;
@@ -2021,7 +2021,7 @@ function() {
 						}
 					}
 				},
-				stop: function() {
+				stop: function(afk) {
 					for (var i in this.threads) {
 						if (this.threads[i].getState() != java.lang.Thread.State.TERMINATED) {
 							this.threads[i].interrupt();
@@ -2030,7 +2030,11 @@ function() {
 							}
 						}
 					}
+					if(afk != null) afk();
 				},
+				restart: function() {
+					this.stop(() => this.run(null, true));
+				}
 			};
 			r.interval = function(n) {
 				var a = new this();
@@ -2057,7 +2061,7 @@ function() {
 				a.run();
 				return a;
 			};
-			r.coroutine = function(obj, count) {
+			r.corun = function(obj, count) {
 				var a = new this(obj);
 				a.co_count(count == null ? 1 : count);
 				a.run();
