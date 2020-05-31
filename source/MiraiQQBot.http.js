@@ -18,7 +18,7 @@
 
 function() {
 	var r = {
-		__version: "v1.6.2_http",
+		__version: "v1.6.3_http",
 
 		WINDOWS: "Windows",
 		LINUX: "Linux",
@@ -76,12 +76,10 @@ function() {
 		this.host = java.lang.System.getProperty("os.name");
 		if ("context" in globalObject) this.host = r.ANDROID_AUTOJS;
 		
-		r.Log.w("* MiraiQQBot.js版本： " + r.__version);
-		r.Log.w("* 当前为不稳定版本，请保持该脚本的强制更新。");
-		r.Log.w("* 若你发现版本更新了，请及时查看更新日志，以免错过重要新特性。");
-		r.Log.w("* 因取消强制更新而导致MiraiQQBot.js出现bug，恕不解决！");
-		r.Log.i("* 更新日志：https://github.com/StageGuard/mirai-rhinojs-sdk");
-		r.Log.i("* SDK文档：https://stageguard.top/p/mirai-rhinojs-sdk.html");
+		r.Log.w("* MiraiQQBot.js version: " + r.__version);
+		r.Log.w("* 当前为不稳定版本");
+		r.Log.i("* Update log: https://github.com/StageGuard/mirai-rhinojs-sdk");
+		r.Log.i("* SDK: https://stageguard.top/p/mirai-rhinojs-sdk.html");
 
 	};
 	r.registerClasses2Object = function(obj) {
@@ -234,18 +232,18 @@ function() {
 			for (var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
 			//如果target是群组，直接发送群组消息
 			if (target instanceof r.GroupInfo) {
-				return r.__protocol.sendGroupMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+				return r.__protocol.sendGroupMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 			} else if (target instanceof r.MessageSender) {
 				//如果是发送者，判断是否有好友，有则直接发好友消息
 				var friends = r.__protocol.getFriendList(this.sessionKey);
 				for (var i in friends) {
 					if (friends[i].id == target.getId()) {
-						return r.__protocol.sendFriendMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+						return r.__protocol.sendFriendMessage(this.sessionKey, target.getId(), r.MessageChain.build(msg).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 					}
 				}
 				//若无，则判断发送者是否与bot在同一个群，有则发送临时消息
 				if (target.getPermission() != null) {
-					return r.__protocol.sendTempMessage(this.sessionKey, target.getId(), target.group.id, r.MessageChain.build(msg).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+					return r.__protocol.sendTempMessage(this.sessionKey, target.getId(), target.group.id, r.MessageChain.build(msg).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 				} else {
 					r.Log.e("Cannot send message(target=" + target + ")");
 					return 0;
@@ -361,16 +359,16 @@ function() {
 				var friends = r.__protocol.getFriendList(this.session);
 				for (var i in friends) {
 					if (friends[i].id == this.getId()) {
-						return r.__protocol.sendFriendMessage(this.session, this.getId(), r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+						return r.__protocol.sendFriendMessage(this.session, this.getId(), r.MessageChain.build(arguments).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 					}
 				}
 				return r.__protocol.sendTempMessage(this.session, this.getId(), this.group.id, r.MessageChain.build(arguments).toSource());
 			},
 			reply: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
+				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
 			},
 			at: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).addF(r.MessageType.At(this)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.group.id, r.MessageChain.build(arguments).addF(r.MessageType.At(this)).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 			},
 
 			mute: function(time) {
@@ -408,15 +406,15 @@ function() {
 				return this.permission;
 			},
 			send: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 			},
 			reply: function() {
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(arguments).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource(), this.sourceId);
 			},
 			at: function(sender) {
 				var msg = new Array();
 				for (var i = 1; i < arguments.length; i++) msg.push(arguments[i]);
-				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(msg).addF(r.MessageType.At(sender)).discord(r.MessageTypeConst.QUOUE).discord(r.MessageTypeConst.SOURCE).toSource());
+				return r.__protocol.sendGroupMessage(this.session, this.id, r.MessageChain.build(msg).addF(r.MessageType.At(sender)).discard(r.MessageTypeConst.QUOUE).discard(r.MessageTypeConst.SOURCE).toSource());
 			},
 			mute: function(target, time) {
 				r.__protocol.mute(this.session, this.id, (target instanceof r.MessageSender) ? target.getId() : target, Number(Math.min(Math.max(0, time == null ? 60 : time), 2591999)));
@@ -501,22 +499,18 @@ function() {
 	};
 	//把各种构造方法构造的消息链转成json后再转成消息数组
 	r.MessageChain.__convert = function(raw) {
-		//通过伪操作符重载的方法构造
-		if (raw.length == 1 && typeof(raw[0]) == "string") {
-			var msgs = /\}\{"type":/gi.test(raw[0]) ? raw[0].replace(/\}\{"type":/gi, "}<_*split*flag_&@2>{\"type\":").split("<_*split*flag_&@2>") : [(raw[0].slice(0, 1) == "{") ? raw[0] : r.MessageType.Plain(raw[0])];
-			var chains = [];
-			for (var i in msgs) chains.push(JSON.parse(msgs[i]));
-			return this.__json2MessageArray(chains);
-			//通过MessageChain的方式构造
-		} else if (raw.length == 1 && (raw[0] instanceof r.MessageChain)) {
+		if (raw.length == 1 && (raw[0] instanceof r.MessageChain)) {
 			return raw[0];
-			//通过JSON Array的方式构造
 		} else if (raw.length == 1 && (raw[0] instanceof Array)) {
 			return this.__json2MessageArray(raw[0]);
-			//通过多参方法构造
 		} else if (raw.length > 1) {
 			var chains = [];
-			for (var i in raw) chains.push((raw[i] instanceof r.MessageChain) ? raw[i] : JSON.parse((raw[i].slice(0, 1) == "{") ? raw[i] : r.MessageType.Plain(raw[i])));
+			for (var i in raw) chains.push((raw[i] instanceof r.MessageChain) ? raw[i] : JSON.parse((raw[i].slice(0, 1) == "{") ? raw[i] : r.MessageType.Plain(String(raw[i]))));
+			return this.__json2MessageArray(chains);
+		} else if (raw.length == 1) {
+			var msgs = /\}\{"type":/gi.test(raw[0] = String(raw[0])) ? raw[0].replace(/\}\{"type":/gi, "}<_*split*flag_&@2>{\"type\":").split("<_*split*flag_&@2>") : [(/^{"type":"[A-Za-z]+",.+}$/.test(raw[0])) ? raw[0] : r.MessageType.Plain(raw[0])];
+			var chains = [];
+			for (var i in msgs) chains.push(JSON.parse(msgs[i]));
 			return this.__json2MessageArray(chains);
 		} else {
 			r.Log.e("Unknown type of MessageChain constructor.");
@@ -532,6 +526,125 @@ function() {
 			return new this(chain);
 		}
 	}
+	
+	r.MessageChain.__TContainerObj = (function(){
+		var k = function(msg) {
+			this.msg = msg;
+			this.matcher_values = {};
+			this.matcher_index = -1;
+			this.flag = false;
+		};
+		k.prototype = {
+			then: function(obj) {
+				if(this.flag) {
+					obj(this.matcher_index, this.matcher_values);
+				}
+				return this;
+			},
+			thenSync: function(obj) {
+				if(this.flag) {
+					r.utils.rsync.run((s) => obj(this.matcher_index, this.matcher_values, s));
+				}
+				return this;
+			},
+			or: function(obj) {
+				if(!this.flag) {
+					obj(this.matcher_index, this.matcher_values);
+				}
+				return this;
+			},
+			orSync: function(obj) {
+				if(!this.flag) {
+					r.utils.rsync.run((s) => obj(this.matcher_index, this.matcher_values, s));
+				}
+				return this;
+			},
+			contains: function(regex) { 
+				var list = {}, _for = true;
+				this.flag = false;
+				for(var n in (regex = (regex instanceof Array) ? regex : [regex])) {
+				if(!_for) continue;
+				var index = 1, matcher = regex[n] instanceof RegExp ? (function z(){
+					z.s = regex[n].toString();
+					return z.s.substr(1, z.s.length - 2)
+				}()) : regex[n], mlist = [];
+				const gexp = /\$\{([a-z](<([a-z]+((\s)*=(\s)*[A-Za-z0-9"]{1,})*(,)*(\s)*)*>)*:)*([^0-9]{1}[A-Za-z0-9]{1,})\}/i;
+				const child_exp = /\(([^?][^:][\s\S]+)\)/i;
+				
+				while(matcher.search(child_exp) != -1) matcher = matcher.replace(child_exp, "(?:$1)");
+				while(matcher.search(gexp) != -1) {
+					var exp = gexp.exec(matcher);
+					var type = "s"; //默认匹配s类型
+					var props = []; //默认无任何属性
+					if(exp[1]) { //是${t:name}类的
+						type = exp[1].substr(0, 1);
+						if(/[a-z]{1}<[^>]/.test(exp[1].substr(0, exp[1].length - 1))) props = (function(s1) {
+							var p1 = (s1.search(",") != -1) ? s1.split(",") : [s1];
+							for(var i in p1) p1[i] = (p1[i].search("=") != -1) ? (function(s2){
+								var p2 = s2.split("=");
+								return {prop: p2[0].replace(/\s/g, ""), value: /\d/.test(p2[1].replace(/\s/g, "")) ? Number(p2[1].replace(/\s/g, "")) : p2[1].replace(/[\s[^\f]]/g, "")};
+							}(p1[i])) : {prop: p1[i].replace(/\s/g, ""), value: null}
+							return p1;
+						} (exp[1].substr(2, exp[1].length - 4)));
+					}
+					switch(type) {
+						case "s": {
+							var sp = false, lb = false, len = -1;
+							for(var i in props) {
+								if(props[i].prop == "sp") sp = true;
+								if(props[i].prop == "lb") lb = true;
+								if(props[i].prop == "len") len = props[i].value;
+							}
+							matcher = matcher.replace(exp[0], (function() {
+								var r = "([";
+								if(lb && sp) {
+									r += "\\s\\S";
+								} else {
+									r += "^";
+									r += sp ? "" : " ";
+									r += lb ? "" : "\\n";
+								}
+								r += ("]" + (len == -1 ? "+" : "{" + len + "}"));
+								r += ")";
+								return r;
+							}()));
+							break;
+						}
+						case "n": {
+							var bit = -1;
+							for(var i in props) {
+								if(props[i].prop == "bit") bit = props[i].value;
+							}
+							matcher = matcher.replace(exp[0], (function() {
+								var r = bit == -1 ? "(\\d" : "([\\d";
+								r += bit == -1 ? "+)" : ("]{" + bit + "})");
+								return r;
+							}()));
+							break;
+						}
+						default: matcher = matcher.replace(gexp.exec(matcher)[0], "REP"); 
+					}
+					mlist.push({index: index ++, name: exp[exp.length - 1], type: type});
+				}
+				for(var i in this.msg) {
+					var result = (new RegExp(matcher)).exec(this.msg[i]);
+					if(result) {
+						this.flag = true;
+						this.matcher_index = n;
+						for(var i in mlist) {
+							list[mlist[i].name] = mlist[i].type == "n" ? Number(result[mlist[i].index]) : result[mlist[i].index];
+						}
+						_for = false;
+					}
+				}
+				}
+				this.matcher_values = list;
+				return this;
+			},
+		}
+		return k;
+	}())
+	
 	r.MessageChain.prototype = {
 		length: function() {
 			return this.msg.length;
@@ -544,7 +657,7 @@ function() {
 			}
 			return new r.MessageType[type]();
 		},
-		discord: function(type) {
+		discard: function(type) {
 			for (var i in this.msg) {
 				if (this.msg[i].type == type) {
 					this.msg.splice(i, 1);
@@ -554,11 +667,16 @@ function() {
 		},
 		contain: function(text) {
 			for (var i in this.msg) {
-				if (this.msg[i].type == r.MessageTypeConst.PLAIN) {
-					if (this.msg[i].getText().search(text) != -1) return true;
-				}
+				if (String(this.msg[i]._v()).search(text) != -1) return true;
 			}
 			return false;
+		},
+		contains: function self(regex) {
+			self.chain = [];
+			for (var i in this.msg) {
+				self.chain.push(this.msg[i]._v());
+			}
+			return (new r.MessageChain.__TContainerObj(self.chain)).contains(regex);
 		},
 		add: function self() {
 			var chain = r.MessageChain.__convert(arguments);
@@ -587,6 +705,7 @@ function() {
 			}
 			return self.str.replace(/\}\{/gi, "}, {") + "]";
 		},
+		
 
 	};
 
@@ -634,6 +753,9 @@ function() {
 						time: this.time
 					};
 				},
+				_v: function() {
+					return "";
+				}
 			}
 			return self.r;
 		} ()),
@@ -666,6 +788,9 @@ function() {
 						origin: this.origin.toSource()
 					};
 				},
+				_v: function() {
+					return "";
+				}
 			}
 			return self.r;
 		} ()),
@@ -694,6 +819,9 @@ function() {
 						display: this.display
 					};
 				},
+				_v: function() {
+					return this.target;
+				}
 			}
 			return self.r;
 		} ()),
@@ -710,6 +838,9 @@ function() {
 						type: r.MessageTypeConst.ATALL
 					};
 				},
+				_v: function() {
+					return "";
+				}
 			}
 			return self.r;
 		} ()),
@@ -732,6 +863,9 @@ function() {
 						faceId: this.faceId,
 					}
 				},
+				_v: function() {
+					return this.faceId;
+				}
 			}
 			return self.r;
 		} ()),
@@ -754,6 +888,9 @@ function() {
 						text: this.text,
 					};
 				},
+				_v: function() {
+					return this.text;
+				}
 			}
 			return self.r;
 		} ()),
@@ -787,6 +924,9 @@ function() {
 						path: this.path == null ? null: this.path
 					};
 				},
+				_v: function() {
+					return this.imageId;
+				}
 			}
 			return self.r;
 		} ()),
@@ -820,6 +960,9 @@ function() {
 						path: this.path == null ? null: this.path
 					};
 				},
+				_v: function() {
+					return this.imageId;
+				}
 			}
 			return self.r;
 		} ()),
@@ -841,6 +984,9 @@ function() {
 						type: r.MessageTypeConst.XML,
 						xml: this.xml
 					};
+				},
+				_v: function() {
+					return this.xml;
 				},
 			}
 			return self.r;
@@ -864,6 +1010,9 @@ function() {
 						json: this.json
 					};
 				},
+				_v: function() {
+					return this.json;
+				}
 			}
 			return self.r;
 		} ()),
@@ -886,6 +1035,9 @@ function() {
 						content: this.app
 					};
 				},
+				_v: function() {
+					return this.app;
+				}
 			}
 			return self.r;
 		} ()),
@@ -908,6 +1060,9 @@ function() {
 						name: this.name
 					};
 				},
+				_v: function() {
+					return this.name;
+				}
 			}
 			return self.r;
 		} ()),
@@ -1715,7 +1870,6 @@ function() {
 					connection.connect();
 					return [connection.getContentLength(), connection.getInputStream()];
 				} catch(e) {
-					throw e;
 					return [0, 0];
 				}
 			},
@@ -1738,7 +1892,7 @@ function() {
 					printWriter.flush();
 					bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
 					var line;
-					while ((line = bufferedReader.readLine()) != null) {
+					while ((line = bufferedReader.readLine()) != null && !java.lang.Thread.currentThread().isInterrupted()) {
 						result += line;
 					}
 					if (bufferedReader != null) bufferedReader.close();
@@ -1746,7 +1900,7 @@ function() {
 				} catch(error) {
 					if (bufferedReader != null) bufferedReader.close();
 					if (printWriter != null) printWriter.close();
-					throw error;
+					if (! (/InterruptedException/i).test(error.toString())) throw "Error while posting " + url + " : " + error;
 				}
 				return result;
 			},
@@ -1763,13 +1917,13 @@ function() {
 					connection.setDoInput(true);
 					bufferedReader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
 					var line;
-					while ((line = bufferedReader.readLine()) != null) {
+					while ((line = bufferedReader.readLine()) != null && !java.lang.Thread.currentThread().isInterrupted()) {
 						result += (line + "\n");
 					}
 					if (bufferedReader != null) bufferedReader.close();
 				} catch(error) {
-					throw error;
 					if (bufferedReader != null) bufferedReader.close();
+					if (! (/InterruptedException/i).test(error.toString())) throw "Error while grtting " + url + " : " + error;
 				}
 				return result;
 			},
@@ -1811,7 +1965,7 @@ function() {
 							var bufferedReader = new java.io.BufferedReader(inputStreamReader);
 							var stringBuffer = new java.lang.StringBuffer();
 							var line = null;
-							while ((line = bufferedReader.readLine()) != null) {
+							while ((line = bufferedReader.readLine()) != null && !java.lang.Thread.currentThread().isInterrupted()) {
 								stringBuffer.append(line);
 								stringBuffer.append("\n");
 							}
@@ -1819,7 +1973,7 @@ function() {
 							return stringBuffer.toString();
 						}
 					} catch(error) {
-						throw error;
+						if (! (/InterruptedException/i).test(error.toString())) throw error;
 						return "";
 					}
 				} else {
@@ -1841,7 +1995,7 @@ function() {
 					fileWriter.write(string);
 					fileWriter.close();
 				} catch(error) {
-					throw error;
+					if (! (/InterruptedException/i).test(error.toString())) throw error;
 				}
 			},
 			writeStream: function(path, inputStream, isCover, isInputStreamClose) {
@@ -1858,14 +2012,14 @@ function() {
 					var buffer = new java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 4096);
 					var outputStream = new java.io.FileOutputStream(file);
 					var len = -1;
-					while ((len = inputStream.read(buffer)) != -1) {
+					while ((len = inputStream.read(buffer)) != -1 && !java.lang.Thread.currentThread().isInterrupted()) {
 						outputStream.write(buffer, 0, len);
 					}
 					if (isInputStreamClose) inputStream.close();
 					outputStream.flush();
 					outputStream.close();
 				} catch(error) {
-					throw error;
+					if (! (/InterruptedException/i).test(error.toString())) throw error;
 				}
 			},
 			append: function(path, appendString) {
@@ -1875,7 +2029,7 @@ function() {
 					randomAccessFile.write(java.lang.String(appendString).getBytes());
 					randomAccessFile.close();
 				} catch(error) {
-					throw error;
+					if (! (/InterruptedException/i).test(error.toString())) throw error;
 				}
 			}
 		},
