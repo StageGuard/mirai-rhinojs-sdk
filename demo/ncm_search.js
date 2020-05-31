@@ -202,14 +202,15 @@ var r = {
 	app_string: "{\"app\":\"com.tencent.structmsg\",\"config\":{\"autosize\":true,\"ctime\":{$current_time},\"forward\":true,\"token\":\"77943689edb0852dcd79b982d1d10401\",\"type\":\"normal\"},\"desc\":\"音乐\",\"meta\":{\"music\":{\"action\":\"\",\"android_pkg_name\":\"\",\"app_type\":1,\"appid\":100495085,\"desc\":\"{$desc}\",\"jumpUrl\":\"{$jumpUrl}\",\"musicUrl\":\"{$musicUrl}\",\"preview\":\"{$preview}\",\"sourceMsgId\":\"0\",\"source_icon\":\"\",\"source_url\":\"\",\"tag\":\"{$tag}\",\"title\":\"{$title}\"}},\"prompt\":\"{$prompt}\",\"ver\":\"0.0.0.1\",\"view\":\"music\"}",
 	subscribe: function(group, sender, message) {
 		if(message.contain(/^(搜|点)歌帮助/)) {sender.at(r.getHelp());return;}
-		if(message.contain(/^(搜|点)歌\s/)) {(new java.lang.Thread(new java.lang.Runnable({run: function() {
+		message.contains([
+			"^(搜|点)歌${s<sp>:keyword} ${n<bit=1>:no}", 
+			"^(搜|点)歌${s<sp>:keyword}"
+		]).thenSync((index, k, s) => {
 			var msg = message.get(PLAIN).getText();
-					var content = msg.replace(/^(搜|点)歌\s/, "");
-					Log.v("Received r search: " + content);
-					var b = /\+[1-9]$/.test(content);
-					var search = JSON.parse(r.API.search(b ? content.replace(/\+[1-9]$/, "") : content, 9, 1, r.Type.SONG));
+					Log.v("Received ncm search: " + k.keyword);
+					var search = JSON.parse(r.API.search(k.keyword, 9, 1, r.Type.SONG));
 					if(search.code != 200) {sender.at(search.msg); return;}
-					if(!b) {
+					if(index == 1) {
 						var result = new java.lang.StringBuilder();
 						result.append("曲库共找到约" + search.result.songCount + "首歌曲");
 						for (var i in search.result.songs) {
@@ -221,14 +222,14 @@ var r = {
 								return r.slice(0, r.length - 1);
 							} (search.result.songs[i].artists)) + " - " + search.result.songs[i].name);
 						}
-						if(search.result.songCount != 0) result.append("\n再次搜索并加上\"+序号\"获取歌曲");
+						if(search.result.songCount != 0) result.append("\n再次搜索并加上空格和序号获取歌曲");
 						sender.at(String(result.toString()));
 					} else {
-						var num = Number(String(/\+[1-9]$/.exec(content)).substr(1)) - 1;
+						var num = k.no - 1;
 						if(num > search.result.songCount) return;
 						var song = JSON.parse(r.API.detail_song_mp3(search.result.songs[num].id));
 						var album = JSON.parse(r.API.detail_album(search.result.songs[num].album.id));
-						(function(){return group == null ? sender : group}()).send(App(
+						group.send(App(
 							r.app_string
 								.replace("{$current_time}", Number(String((new Date()).getTime()).substr(0, 10)))
 								.replace("{$desc}", (function(artists) {
@@ -246,7 +247,7 @@ var r = {
 						));
 						sender.at("直链：" + song.data[0].url);
 					}
-		}}))).start();}
+		});
 	},
 	getHelp: function() {
 		return "网易云音乐搜歌+分享\n" + 

@@ -218,9 +218,7 @@ bot.subscribe({
     group.send(message);
   },
   friend: (sender, message) => {
-    if(message.get(POKE).getName() == SIXSIXSIX) {
-      sender.send(Poke(LIKE));
-    }
+    message.contains(SIXSIXSIX).then(() => sender.send(Poke(LIKE)));
   },
  });
 ```
@@ -271,14 +269,21 @@ Session is verified: xxxx
 
 ## 更新日志
 
+### 2020.05.31 → 1.6.3
+
+* `discord` → `discard`。
+* 添加`MessageChain.contains`以更好地判断消息
+* `Mirai.utils.http`和`Mirai.utils.files`兼容`rsync.stop()`。
+* 修改了`MessageChain.__convert`的判断逻辑。
+
+文档已更新，`MessageChain.contains`的用法请浏览[SDK文档](https://stageguard.top/p/mirai-rhinojs-sdk.html)。
+
 ### 2020.05.17 → 1.6.2
 
 * 调用`Mirai.registerClasses2Object`时`Mirai.utils`类也会注册到指定对象。
 * 添加`Mirai.__BotManager`中的检验管理和消息监听管理，其管理工作移动到`Mirai.Bot`。
 * 添加工具类`Mirai.utils.rsync`，允许在rhino中异步执行(其本质是`Thread`的封装)。
 * 修复了一些逻辑问题和bug。
-
-~~`rsync`工具类用法将在24小时之内更新。~~已更新。
 
 
 ### 2020.05.02 → 1.6.1
