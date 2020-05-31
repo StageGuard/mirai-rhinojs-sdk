@@ -63,7 +63,7 @@ bot.subscribe({
       }).contains("禁言").then(() => {
     	//group中的permission参数表示的是bot在这个群组的权限
         //sender中的permission参数表示消息发送者在这个群组的权限
-        if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+        if(group.getPermission() == MEMBER || sender.getPermission() == OWNER) {
           group.send("我没有权限做那个！");
         } else {
           //若无At类型消息，get()则返回一个参数都为null的新消息对象
