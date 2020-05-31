@@ -35,58 +35,49 @@ var bot = Mirai.createNewBot(你的qq号);
 bot.subscribe({
   //订阅群组消息
   group: (group, sender, message) => {
-    //检测文本消息中是否包含文字
-    if(message.contain("回复测试")) {
-      //回复这个群友，以下方法是等价的
-      group.reply("回复你了1");
-      group.reply(Plain("回复你了2"));
-      sender.reply("回复你了3");
-      bot.sendGroupMessage(group, [Plain("回复你了4")], sender.getSourceId());
-    } else if(message.contain("at测试")) {
-      //at这个群友，以下方法是等价的
-      sender.at("at你了1");
-      group.at(sender, "at你了2");
-      group.send(At(sender) + Plain("at你了3"));
-      bot.send(group, At(sender) + Plain("at你了4"));
-      bot.send(group, At(sender), Plain("at你了5"));
-      bot.sendGroupMessage(group, [At(sender), Plain("at你了6")]);
-    } else if(message.contain("私聊我")){
-      //自动判断有无好友
-      sender.send("私聊你了1");
-      //自动判断有无好友
-      bot.send(sender, "私聊你了2");
-      //手动判断
-      if(bot.haveFriend(sender)) {
-        bot.sendFriendMessage(sender, [Plain("私聊你了3")]);
-      } else {
-        bot.sendTempMessage(sender, group, [Plain("私聊你了3")]);
-      }
-    //自找苦吃
-    } else if(message.contain("禁言我")){
-      if(group.getPermission() == MEMBER || sender.getPermission() == OWNER) {
-        group.send("我没有权限做那个！");
-      } else {
-        sender.mute();
-      }
-    //管理员定向禁言
-    } else if(message.contain("禁言")){
-      //group中的permission参数表示的是bot在这个群组的权限
-      //sender中的permission参数表示消息发送者在这个群组的权限
-      if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
-        group.send("我没有权限做那个！");
-      } else {
-        //若无At类型消息，get()则返回一个参数都为null的新消息对象
-        if(message.get(AT).getTarget() != null) {
-          //禁言60秒，以下方法都是等价的
-          //获取at类型消息的target参数(被at的人的qq号)
-          var target = message.get(AT).getTarget();
-          bot.mute(group, target, 60);
-          bot.unmute(group, target);
-          group.mute(target, 60);
-          group.unmute(target);
+    message.contains("回复测试").then(() => {
+        //回复这个群友，以下方法是等价的
+        group.reply("回复你了1");
+        group.reply(Plain("回复你了2"));
+        sender.reply("回复你了3");
+        bot.sendGroupMessage(group, [Plain("回复你了4")], sender.getSourceId());
+      }).contains("at测试").then(() => {
+        //at这个群友，以下方法是等价的
+        sender.at("at你了1");
+        group.at(sender, "at你了2");
+        group.send(At(sender) + Plain("at你了3"));
+        bot.send(group, At(sender) + Plain("at你了4"));
+        bot.send(group, At(sender), Plain("at你了5"));
+        bot.sendGroupMessage(group, [At(sender), Plain("at你了6")]);
+      }).contains("私聊我").then(() => {
+        //自动判断有无好友
+        sender.send("私聊你了1");
+        //自动判断有无好友
+        bot.send(sender, "私聊你了2");
+        //手动判断
+        if(bot.haveFriend(sender)) {
+          bot.sendFriendMessage(sender, [Plain("私聊你了3")]);
+        } else {
+          bot.sendTempMessage(sender, group, [Plain("私聊你了3")]);
         }
-      }
-    }
+      }).contains("禁言").then(() => {
+    	//group中的permission参数表示的是bot在这个群组的权限
+        //sender中的permission参数表示消息发送者在这个群组的权限
+        if(group.getPermission() == MEMBER || sender.getPermission == OWNER) {
+          group.send("我没有权限做那个！");
+        } else {
+          //若无At类型消息，get()则返回一个参数都为null的新消息对象
+          if(message.get(AT).getTarget() != null) {
+            //禁言60秒，以下方法都是等价的
+            //获取at类型消息的target参数(被at的人的qq号)
+            var target = message.get(AT).getTarget();
+            bot.mute(group, target, 60);
+            bot.unmute(group, target);
+            group.mute(target, 60);
+            group.unmute(target);
+          }
+        }
+      });
   },
   friend: (sender, message) => {},
   //订阅其他事件
