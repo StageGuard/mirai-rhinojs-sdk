@@ -260,6 +260,10 @@ Session is verified: xxxx
 
 ## 更新日志
 
+### 2020.06.26 → 1.6.4
+
+* 修复`Image`/`FlashImage`消息无法发送本地图片[(#4)](https://github.com/StageGuard/mirai-rhinojs-sdk/issues/4)。
+
 ### 2020.05.31 → 1.6.3
 
 * `discord` → `discard`。

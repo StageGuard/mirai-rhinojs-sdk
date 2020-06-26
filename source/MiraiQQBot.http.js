@@ -18,7 +18,7 @@
 
 function() {
 	var r = {
-		__version: "v1.6.3_http",
+		__version: "v1.6.4_http",
 
 		WINDOWS: "Windows",
 		LINUX: "Linux",
@@ -199,7 +199,7 @@ function() {
 				}
 			}catch(e) {
 				if(/500/.test(e.toString())) {
-					r.Log.w("Http server crashed an error, if this error log continues to print, please suumit this issue to mamoe/mirai-api-http with full error log.");
+					r.Log.w("Http server crashed an error, if this error log continues to print, please submit this issue to project-mirai/mirai-api-http with full error log.");
 				} else {
 					throw e;
 				}
@@ -475,10 +475,10 @@ function() {
 					chains.push(new r.MessageType.Face(msg[i].faceId, msg[i].name, true));
 					break;
 				case r.MessageTypeConst.IMAGE:
-					chains.push(new r.MessageType.Image(msg[i].imageId, msg[i].url, null, true));
+					chains.push(new r.MessageType.Image(msg[i].imageId, msg[i].url, msg[i].path, true));
 					break;
 				case r.MessageTypeConst.FLASHIMAGE:
-					chains.push(new r.MessageType.FlashImage(msg[i].imageId, msg[i].url, null, true));
+					chains.push(new r.MessageType.FlashImage(msg[i].imageId, msg[i].url, msg[i].path, true));
 					break;
 				case r.MessageTypeConst.XML:
 					chains.push(new r.MessageType.Xml(msg[i].xml, true));
@@ -899,8 +899,8 @@ function() {
 				if (!flag && arguments.length) return (function() {
 					return JSON.stringify({
 						type: r.MessageTypeConst.IMAGE,
-						imageId: imageId,
-						url: url,
+						imageId: imageId == null ? null: imageId,
+						url: url == null ? null: url,
 						path: path == null ? null: path
 					});
 				} ());
