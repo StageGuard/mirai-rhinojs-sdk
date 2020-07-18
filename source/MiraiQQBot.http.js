@@ -201,7 +201,7 @@ function() {
 				if(/500/.test(e.toString())) {
 					r.Log.w("Http server crashed an error, if this error log continues to print, please submit this issue to project-mirai/mirai-api-http with full error log.");
 				} else {
-					throw e;
+					r.Log(e);
 				}
 			}}
 		});
@@ -2061,7 +2061,7 @@ function() {
 						}
 					} catch(error) {
 						if (! (/InterruptedException/i).test(error.toString())) {
-							throw error;
+							r.Log.e(error);
 						}
 					}
 				},
