@@ -1,3 +1,6 @@
+# Deprecated
+不再维护此仓库，请前往 [iTXTech/mirai-js](https://github.com/iTXTech/mirai-js) 查看另一个基于 Mozilla Rhino 和 Mirai 的
+
 # mirai-rhinojs-sdk
 为[Mirai](https://github.com/mamoe/mirai)的[mirai-api-http](https://github.com/mamoe/mirai-api-http)提供封装好的适用于全平台的SDK。
 
